@@ -7,11 +7,15 @@ struct Footer {
     var id: String           // 關係 ID (如 "rId11")
     var paragraphs: [Paragraph]
     var type: HeaderFooterType
+    var pageNumberFormat: PageNumberFormat?  // 頁碼格式（如果是頁碼頁尾）
+    var pageNumberAlignment: ParagraphAlignment  // 頁碼對齊方式
 
-    init(id: String, paragraphs: [Paragraph] = [], type: HeaderFooterType = .default) {
+    init(id: String, paragraphs: [Paragraph] = [], type: HeaderFooterType = .default, pageNumberFormat: PageNumberFormat? = nil, pageNumberAlignment: ParagraphAlignment = .center) {
         self.id = id
         self.paragraphs = paragraphs
         self.type = type
+        self.pageNumberFormat = pageNumberFormat
+        self.pageNumberAlignment = pageNumberAlignment
     }
 
     /// 建立含單一文字的頁尾
@@ -23,9 +27,8 @@ struct Footer {
 
     /// 建立含頁碼的頁尾
     static func withPageNumber(id: String, alignment: ParagraphAlignment = .center, format: PageNumberFormat = .simple, type: HeaderFooterType = .default) -> Footer {
-        var para = Paragraph()
-        para.properties.alignment = alignment
-        return Footer(id: id, paragraphs: [para], type: type)
+        // 儲存格式資訊，讓 DocxWriter 能夠正確生成 XML
+        return Footer(id: id, paragraphs: [], type: type, pageNumberFormat: format, pageNumberAlignment: alignment)
     }
 }
 

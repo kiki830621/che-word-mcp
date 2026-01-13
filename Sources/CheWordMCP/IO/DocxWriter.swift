@@ -324,12 +324,16 @@ struct DocxWriter {
     // MARK: - Footer
 
     private static func writeFooter(_ footer: Footer, to baseURL: URL) throws {
-        // 如果頁尾段落為空，使用預設的頁碼格式
         let xml: String
-        if footer.paragraphs.isEmpty || (footer.paragraphs.count == 1 && footer.paragraphs[0].runs.isEmpty) {
-            // 預設使用簡單頁碼格式
+
+        // 如果有指定頁碼格式，使用頁碼格式生成 XML
+        if let format = footer.pageNumberFormat {
+            xml = footer.toXMLWithPageNumber(format: format, alignment: footer.pageNumberAlignment)
+        } else if footer.paragraphs.isEmpty {
+            // 沒有段落也沒有頁碼格式，使用預設簡單頁碼
             xml = footer.toXMLWithPageNumber(format: .simple)
         } else {
+            // 有段落內容，使用一般 XML 輸出
             xml = footer.toXML()
         }
 
