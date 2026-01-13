@@ -1,0 +1,30 @@
+# Build
+.build/
+DerivedData/
+
+# Swift Package Manager
+.swiftpm/
+Package.resolved
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Test files
+*.docx
+*.md
+!README.md
+!README_zh-TW.md
