@@ -45,6 +45,14 @@ struct DocxReader {
             document.properties = try parseCoreProperties(from: coreXML)
         }
 
+        // 6. 讀取 comments.xml（可選）
+        let commentsURL = tempDir.appendingPathComponent("word/comments.xml")
+        if FileManager.default.fileExists(atPath: commentsURL.path) {
+            let commentsData = try Data(contentsOf: commentsURL)
+            let commentsXML = try XMLDocument(data: commentsData)
+            document.comments = try parseComments(from: commentsXML)
+        }
+
         return document
     }
 
@@ -519,5 +527,67 @@ struct DocxReader {
         }
 
         return props
+    }
+
+    // MARK: - Comments Parsing
+
+    private static func parseComments(from xml: XMLDocument) throws -> CommentsCollection {
+        var collection = CommentsCollection()
+
+        // 取得所有註解節點
+        let commentNodes = try xml.nodes(forXPath: "//*[local-name()='comment']")
+
+        for node in commentNodes {
+            guard let element = node as? XMLElement else { continue }
+
+            // 解析註解 ID
+            guard let idStr = element.attribute(forName: "w:id")?.stringValue,
+                  let id = Int(idStr) else { continue }
+
+            // 解析作者
+            let author = element.attribute(forName: "w:author")?.stringValue ?? "Unknown"
+
+            // 解析縮寫
+            let initials = element.attribute(forName: "w:initials")?.stringValue
+
+            // 解析日期
+            let dateFormatter = ISO8601DateFormatter()
+            var date = Date()
+            if let dateStr = element.attribute(forName: "w:date")?.stringValue {
+                date = dateFormatter.date(from: dateStr) ?? Date()
+            }
+
+            // 解析註解文字（從 w:p/w:r/w:t 取得）
+            var text = ""
+            let textNodes = try element.nodes(forXPath: ".//*[local-name()='t']")
+            for textNode in textNodes {
+                text += textNode.stringValue ?? ""
+            }
+
+            // 建立 Comment 物件
+            // 注意：從 comments.xml 讀取時，paragraphIndex 需要從文件中的 commentRangeStart 來確定
+            // 這裡先設為 -1，表示需要從文件內容對應
+            var comment = Comment(
+                id: id,
+                author: author,
+                text: text.trimmingCharacters(in: .whitespacesAndNewlines),
+                paragraphIndex: -1,
+                date: date,
+                initials: initials
+            )
+
+            // 嘗試解析 w14:paraId（用於回覆連結）
+            // 從段落屬性中取得
+            if let pElement = element.elements(forName: "w:p").first {
+                // w14:paraId 可能在段落屬性中
+                if let paraIdAttr = pElement.attribute(forName: "w14:paraId")?.stringValue {
+                    comment.paraId = paraIdAttr
+                }
+            }
+
+            collection.comments.append(comment)
+        }
+
+        return collection
     }
 }
