@@ -5,10 +5,12 @@ import Foundation
 struct Run {
     var text: String
     var properties: RunProperties
+    var drawing: Drawing?  // 圖片繪圖元素
 
     init(text: String, properties: RunProperties = RunProperties()) {
         self.text = text
         self.properties = properties
+        self.drawing = nil
     }
 }
 
@@ -25,6 +27,9 @@ struct RunProperties {
     var color: String?              // RGB hex (e.g., "FF0000")
     var highlight: HighlightColor?
     var verticalAlign: VerticalAlign?
+    var characterSpacing: CharacterSpacing?  // 字元間距
+    var textEffect: TextEffect?              // 文字效果
+    var rawXML: String?                      // 原始 XML（用於進階功能如 SDT）
 
     init() {}
 
@@ -59,6 +64,9 @@ struct RunProperties {
         if let color = other.color { self.color = color }
         if let highlight = other.highlight { self.highlight = highlight }
         if let verticalAlign = other.verticalAlign { self.verticalAlign = verticalAlign }
+        if let characterSpacing = other.characterSpacing { self.characterSpacing = characterSpacing }
+        if let textEffect = other.textEffect { self.textEffect = textEffect }
+        if let rawXML = other.rawXML { self.rawXML = rawXML }
     }
 }
 
@@ -107,6 +115,11 @@ enum VerticalAlign: String, Codable {
 extension Run {
     /// 轉換為 OOXML XML 字串
     func toXML() -> String {
+        // 如果有原始 XML，直接輸出（用於 SDT, TOC, 數學公式等）
+        if let rawXML = properties.rawXML {
+            return rawXML
+        }
+
         var xml = "<w:r>"
 
         // Run Properties
@@ -115,8 +128,14 @@ extension Run {
             xml += "<w:rPr>\(propsXML)</w:rPr>"
         }
 
-        // Text (保留空格)
-        xml += "<w:t xml:space=\"preserve\">\(escapeXML(text))</w:t>"
+        // Drawing (圖片) - 如果有圖片，優先輸出圖片
+        if let drawing = drawing {
+            xml += drawing.toXML()
+        } else {
+            // Text (保留空格)
+            xml += "<w:t xml:space=\"preserve\">\(escapeXML(text))</w:t>"
+        }
+
         xml += "</w:r>"
 
         return xml
@@ -165,6 +184,12 @@ extension RunProperties {
         }
         if let verticalAlign = verticalAlign {
             parts.append("<w:vertAlign w:val=\"\(verticalAlign.rawValue)\"/>")
+        }
+        if let characterSpacing = characterSpacing {
+            parts.append(characterSpacing.toXML())
+        }
+        if let textEffect = textEffect {
+            parts.append(textEffect.toXML())
         }
 
         return parts.joined()

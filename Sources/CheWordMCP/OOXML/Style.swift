@@ -44,6 +44,32 @@ enum StyleType: String, Codable {
     case numbering = "numbering"
 }
 
+// MARK: - Style Update
+
+/// 樣式更新資料結構
+struct StyleUpdate {
+    var name: String?
+    var basedOn: String?
+    var nextStyle: String?
+    var isQuickStyle: Bool?
+    var paragraphProperties: ParagraphProperties?
+    var runProperties: RunProperties?
+
+    init(name: String? = nil,
+         basedOn: String? = nil,
+         nextStyle: String? = nil,
+         isQuickStyle: Bool? = nil,
+         paragraphProperties: ParagraphProperties? = nil,
+         runProperties: RunProperties? = nil) {
+        self.name = name
+        self.basedOn = basedOn
+        self.nextStyle = nextStyle
+        self.isQuickStyle = isQuickStyle
+        self.paragraphProperties = paragraphProperties
+        self.runProperties = runProperties
+    }
+}
+
 // MARK: - Default Styles
 
 extension Style {

@@ -390,6 +390,722 @@ actor WordMCPServer {
                     "required": .array([.string("doc_id"), .string("rows"), .string("cols")])
                 ])
             ),
+            Tool(
+                name: "get_tables",
+                description: "取得文件中所有表格的資訊",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+            Tool(
+                name: "update_cell",
+                description: "更新表格儲存格內容",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "table_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("表格索引（從 0 開始）")
+                        ]),
+                        "row": .object([
+                            "type": .string("integer"),
+                            "description": .string("列索引（從 0 開始）")
+                        ]),
+                        "col": .object([
+                            "type": .string("integer"),
+                            "description": .string("欄索引（從 0 開始）")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("新的儲存格內容")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("table_index"), .string("row"), .string("col"), .string("text")])
+                ])
+            ),
+            Tool(
+                name: "delete_table",
+                description: "刪除指定的表格",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "table_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("表格索引（從 0 開始）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("table_index")])
+                ])
+            ),
+            Tool(
+                name: "merge_cells",
+                description: "合併表格儲存格（支援水平或垂直合併）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "table_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("表格索引（從 0 開始）")
+                        ]),
+                        "direction": .object([
+                            "type": .string("string"),
+                            "description": .string("合併方向：horizontal（水平）或 vertical（垂直）")
+                        ]),
+                        "row": .object([
+                            "type": .string("integer"),
+                            "description": .string("水平合併時：目標列索引；垂直合併時：起始列")
+                        ]),
+                        "col": .object([
+                            "type": .string("integer"),
+                            "description": .string("水平合併時：起始欄；垂直合併時：目標欄索引")
+                        ]),
+                        "end_row": .object([
+                            "type": .string("integer"),
+                            "description": .string("垂直合併時的結束列索引")
+                        ]),
+                        "end_col": .object([
+                            "type": .string("integer"),
+                            "description": .string("水平合併時的結束欄索引")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("table_index"), .string("direction")])
+                ])
+            ),
+            Tool(
+                name: "set_table_style",
+                description: "設定表格樣式（邊框、儲存格底色）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "table_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("表格索引（從 0 開始）")
+                        ]),
+                        "border_style": .object([
+                            "type": .string("string"),
+                            "description": .string("邊框樣式：single, double, dashed, dotted, none")
+                        ]),
+                        "border_color": .object([
+                            "type": .string("string"),
+                            "description": .string("邊框顏色（RGB 十六進位，如 000000）")
+                        ]),
+                        "border_size": .object([
+                            "type": .string("integer"),
+                            "description": .string("邊框寬度（1/8 點，預設 4 = 0.5pt）")
+                        ]),
+                        "cell_row": .object([
+                            "type": .string("integer"),
+                            "description": .string("設定底色的儲存格列索引（可選）")
+                        ]),
+                        "cell_col": .object([
+                            "type": .string("integer"),
+                            "description": .string("設定底色的儲存格欄索引（可選）")
+                        ]),
+                        "shading_color": .object([
+                            "type": .string("string"),
+                            "description": .string("儲存格底色（RGB 十六進位，如 FFFF00）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("table_index")])
+                ])
+            ),
+
+            // 樣式管理
+            Tool(
+                name: "list_styles",
+                description: "列出文件中所有可用的樣式",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+            Tool(
+                name: "create_style",
+                description: "建立自訂樣式",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "style_id": .object([
+                            "type": .string("string"),
+                            "description": .string("樣式 ID（唯一識別碼）")
+                        ]),
+                        "name": .object([
+                            "type": .string("string"),
+                            "description": .string("樣式顯示名稱")
+                        ]),
+                        "type": .object([
+                            "type": .string("string"),
+                            "description": .string("樣式類型：paragraph, character, table, numbering")
+                        ]),
+                        "based_on": .object([
+                            "type": .string("string"),
+                            "description": .string("基於的樣式 ID（可選）")
+                        ]),
+                        "next_style": .object([
+                            "type": .string("string"),
+                            "description": .string("下一段使用的樣式 ID（可選）")
+                        ]),
+                        "font_name": .object([
+                            "type": .string("string"),
+                            "description": .string("字型名稱")
+                        ]),
+                        "font_size": .object([
+                            "type": .string("integer"),
+                            "description": .string("字型大小（點數）")
+                        ]),
+                        "bold": .object([
+                            "type": .string("boolean"),
+                            "description": .string("粗體")
+                        ]),
+                        "italic": .object([
+                            "type": .string("boolean"),
+                            "description": .string("斜體")
+                        ]),
+                        "color": .object([
+                            "type": .string("string"),
+                            "description": .string("文字顏色（RGB 十六進位）")
+                        ]),
+                        "alignment": .object([
+                            "type": .string("string"),
+                            "description": .string("對齊方式：left, center, right, both")
+                        ]),
+                        "space_before": .object([
+                            "type": .string("integer"),
+                            "description": .string("段前間距（點數）")
+                        ]),
+                        "space_after": .object([
+                            "type": .string("integer"),
+                            "description": .string("段後間距（點數）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("style_id"), .string("name")])
+                ])
+            ),
+            Tool(
+                name: "update_style",
+                description: "修改現有樣式的定義",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "style_id": .object([
+                            "type": .string("string"),
+                            "description": .string("要修改的樣式 ID")
+                        ]),
+                        "name": .object([
+                            "type": .string("string"),
+                            "description": .string("新的顯示名稱")
+                        ]),
+                        "font_name": .object([
+                            "type": .string("string"),
+                            "description": .string("字型名稱")
+                        ]),
+                        "font_size": .object([
+                            "type": .string("integer"),
+                            "description": .string("字型大小（點數）")
+                        ]),
+                        "bold": .object([
+                            "type": .string("boolean"),
+                            "description": .string("粗體")
+                        ]),
+                        "italic": .object([
+                            "type": .string("boolean"),
+                            "description": .string("斜體")
+                        ]),
+                        "color": .object([
+                            "type": .string("string"),
+                            "description": .string("文字顏色（RGB 十六進位）")
+                        ]),
+                        "alignment": .object([
+                            "type": .string("string"),
+                            "description": .string("對齊方式")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("style_id")])
+                ])
+            ),
+            Tool(
+                name: "delete_style",
+                description: "刪除自訂樣式（不能刪除內建樣式）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "style_id": .object([
+                            "type": .string("string"),
+                            "description": .string("要刪除的樣式 ID")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("style_id")])
+                ])
+            ),
+
+            // 清單/編號
+            Tool(
+                name: "insert_bullet_list",
+                description: "插入項目符號清單",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "items": .object([
+                            "type": .string("array"),
+                            "description": .string("清單項目（字串陣列）")
+                        ]),
+                        "index": .object([
+                            "type": .string("integer"),
+                            "description": .string("插入位置（可選，不指定則加到最後）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("items")])
+                ])
+            ),
+            Tool(
+                name: "insert_numbered_list",
+                description: "插入編號清單",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "items": .object([
+                            "type": .string("array"),
+                            "description": .string("清單項目（字串陣列）")
+                        ]),
+                        "index": .object([
+                            "type": .string("integer"),
+                            "description": .string("插入位置（可選，不指定則加到最後）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("items")])
+                ])
+            ),
+            Tool(
+                name: "set_list_level",
+                description: "設定清單項目的層級（0-8）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引")
+                        ]),
+                        "level": .object([
+                            "type": .string("integer"),
+                            "description": .string("層級（0-8，0 為最外層）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("level")])
+                ])
+            ),
+
+            // 頁面設定
+            Tool(
+                name: "set_page_size",
+                description: "設定頁面大小（letter, a4, legal, a3, a5, b5, executive）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "size": .object([
+                            "type": .string("string"),
+                            "description": .string("頁面大小：letter, a4, legal, a3, a5, b5, executive")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("size")])
+                ])
+            ),
+            Tool(
+                name: "set_page_margins",
+                description: "設定頁邊距",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "preset": .object([
+                            "type": .string("string"),
+                            "description": .string("預設邊距：normal, narrow, moderate, wide（可選）")
+                        ]),
+                        "top": .object([
+                            "type": .string("integer"),
+                            "description": .string("上邊距（twips，1440 = 1 英寸）")
+                        ]),
+                        "right": .object([
+                            "type": .string("integer"),
+                            "description": .string("右邊距（twips）")
+                        ]),
+                        "bottom": .object([
+                            "type": .string("integer"),
+                            "description": .string("下邊距（twips）")
+                        ]),
+                        "left": .object([
+                            "type": .string("integer"),
+                            "description": .string("左邊距（twips）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+            Tool(
+                name: "set_page_orientation",
+                description: "設定頁面方向（直向/橫向）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "orientation": .object([
+                            "type": .string("string"),
+                            "description": .string("頁面方向：portrait（直向）, landscape（橫向）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("orientation")])
+                ])
+            ),
+            Tool(
+                name: "insert_page_break",
+                description: "插入分頁符",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "at_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("插入位置（段落索引，可選，預設插在文件最後）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+            Tool(
+                name: "insert_section_break",
+                description: "插入分節符（可設定不同的分節類型）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "type": .object([
+                            "type": .string("string"),
+                            "description": .string("分節類型：nextPage（下一頁）, continuous（連續）, evenPage（偶數頁）, oddPage（奇數頁）")
+                        ]),
+                        "at_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("插入位置（段落索引，可選）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+
+            // 頁首/頁尾
+            Tool(
+                name: "add_header",
+                description: "新增頁首",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("頁首文字")
+                        ]),
+                        "type": .object([
+                            "type": .string("string"),
+                            "description": .string("頁首類型：default（預設）, first（首頁）, even（偶數頁）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("text")])
+                ])
+            ),
+            Tool(
+                name: "update_header",
+                description: "更新頁首內容",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "header_id": .object([
+                            "type": .string("string"),
+                            "description": .string("頁首 ID（從 add_header 返回）")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("新的頁首文字")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("header_id"), .string("text")])
+                ])
+            ),
+            Tool(
+                name: "add_footer",
+                description: "新增頁尾",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("頁尾文字（可選，若不提供則使用頁碼）")
+                        ]),
+                        "type": .object([
+                            "type": .string("string"),
+                            "description": .string("頁尾類型：default（預設）, first（首頁）, even（偶數頁）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+            Tool(
+                name: "update_footer",
+                description: "更新頁尾內容",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "footer_id": .object([
+                            "type": .string("string"),
+                            "description": .string("頁尾 ID（從 add_footer 返回）")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("新的頁尾文字")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("footer_id"), .string("text")])
+                ])
+            ),
+            Tool(
+                name: "insert_page_number",
+                description: "在頁尾插入頁碼",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "format": .object([
+                            "type": .string("string"),
+                            "description": .string("頁碼格式：simple（1）, pageOfTotal（Page 1 of 10）, withDash（- 1 -）, 或自訂格式如 '第#頁'（# 代表頁碼）")
+                        ]),
+                        "alignment": .object([
+                            "type": .string("string"),
+                            "description": .string("對齊方式：left, center, right（預設 center）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+
+            // 圖片
+            Tool(
+                name: "insert_image",
+                description: "插入圖片到文件中",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "base64": .object([
+                            "type": .string("string"),
+                            "description": .string("圖片的 Base64 編碼資料")
+                        ]),
+                        "file_name": .object([
+                            "type": .string("string"),
+                            "description": .string("圖片檔名（包含副檔名，如 image.png）")
+                        ]),
+                        "width": .object([
+                            "type": .string("integer"),
+                            "description": .string("圖片寬度（像素）")
+                        ]),
+                        "height": .object([
+                            "type": .string("integer"),
+                            "description": .string("圖片高度（像素）")
+                        ]),
+                        "index": .object([
+                            "type": .string("integer"),
+                            "description": .string("插入位置（段落索引，可選）")
+                        ]),
+                        "name": .object([
+                            "type": .string("string"),
+                            "description": .string("圖片名稱（可選，用於替代文字）")
+                        ]),
+                        "description": .object([
+                            "type": .string("string"),
+                            "description": .string("圖片描述（可選，用於無障礙）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("base64"), .string("file_name"), .string("width"), .string("height")])
+                ])
+            ),
+            Tool(
+                name: "update_image",
+                description: "更新圖片尺寸",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "image_id": .object([
+                            "type": .string("string"),
+                            "description": .string("圖片 ID（從 insert_image 返回）")
+                        ]),
+                        "width": .object([
+                            "type": .string("integer"),
+                            "description": .string("新的寬度（像素，可選）")
+                        ]),
+                        "height": .object([
+                            "type": .string("integer"),
+                            "description": .string("新的高度（像素，可選）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("image_id")])
+                ])
+            ),
+            Tool(
+                name: "delete_image",
+                description: "刪除圖片",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "image_id": .object([
+                            "type": .string("string"),
+                            "description": .string("圖片 ID（從 insert_image 返回）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("image_id")])
+                ])
+            ),
+            Tool(
+                name: "list_images",
+                description: "列出文件中所有圖片",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+            Tool(
+                name: "set_image_style",
+                description: "設定圖片樣式（邊框、陰影等）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "image_id": .object([
+                            "type": .string("string"),
+                            "description": .string("圖片 ID（從 insert_image 返回）")
+                        ]),
+                        "has_border": .object([
+                            "type": .string("boolean"),
+                            "description": .string("是否顯示邊框")
+                        ]),
+                        "border_color": .object([
+                            "type": .string("string"),
+                            "description": .string("邊框顏色（RGB hex，如 '000000'）")
+                        ]),
+                        "border_width": .object([
+                            "type": .string("integer"),
+                            "description": .string("邊框寬度（EMU，9525 ≈ 0.75pt）")
+                        ]),
+                        "has_shadow": .object([
+                            "type": .string("boolean"),
+                            "description": .string("是否顯示陰影")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("image_id")])
+                ])
+            ),
 
             // 匯出
             Tool(
@@ -426,6 +1142,632 @@ actor WordMCPServer {
                         ])
                     ]),
                     "required": .array([.string("doc_id"), .string("path")])
+                ])
+            ),
+
+            // 超連結和書籤
+            Tool(
+                name: "insert_hyperlink",
+                description: "插入外部超連結（URL）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "url": .object([
+                            "type": .string("string"),
+                            "description": .string("目標 URL（如 https://example.com）")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("連結顯示文字")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("插入到哪個段落（可選，預設最後一個段落）")
+                        ]),
+                        "tooltip": .object([
+                            "type": .string("string"),
+                            "description": .string("滑鼠懸停提示文字（可選）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("url"), .string("text")])
+                ])
+            ),
+            Tool(
+                name: "insert_internal_link",
+                description: "插入內部連結（連到書籤）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "bookmark_name": .object([
+                            "type": .string("string"),
+                            "description": .string("目標書籤名稱")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("連結顯示文字")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("插入到哪個段落（可選，預設最後一個段落）")
+                        ]),
+                        "tooltip": .object([
+                            "type": .string("string"),
+                            "description": .string("滑鼠懸停提示文字（可選）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("bookmark_name"), .string("text")])
+                ])
+            ),
+            Tool(
+                name: "update_hyperlink",
+                description: "更新超連結的文字或 URL",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "hyperlink_id": .object([
+                            "type": .string("string"),
+                            "description": .string("超連結 ID（從 insert_hyperlink 返回）")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("新的顯示文字（可選）")
+                        ]),
+                        "url": .object([
+                            "type": .string("string"),
+                            "description": .string("新的 URL（可選，僅外部連結）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("hyperlink_id")])
+                ])
+            ),
+            Tool(
+                name: "delete_hyperlink",
+                description: "刪除超連結（保留文字但移除連結）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "hyperlink_id": .object([
+                            "type": .string("string"),
+                            "description": .string("超連結 ID（從 insert_hyperlink 返回）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("hyperlink_id")])
+                ])
+            ),
+            Tool(
+                name: "insert_bookmark",
+                description: "插入書籤標記（用於文件內部導航）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "name": .object([
+                            "type": .string("string"),
+                            "description": .string("書籤名稱（不能包含空格，不能以數字開頭，最多 40 字元）")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("插入到哪個段落（可選，預設最後一個段落）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("name")])
+                ])
+            ),
+            Tool(
+                name: "delete_bookmark",
+                description: "刪除書籤",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "name": .object([
+                            "type": .string("string"),
+                            "description": .string("要刪除的書籤名稱")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("name")])
+                ])
+            ),
+
+            // 註解和修訂
+            Tool(
+                name: "insert_comment",
+                description: "在指定段落插入註解",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("註解文字")
+                        ]),
+                        "author": .object([
+                            "type": .string("string"),
+                            "description": .string("作者名稱")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("要附加註解的段落索引")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("text"), .string("author"), .string("paragraph_index")])
+                ])
+            ),
+            Tool(
+                name: "update_comment",
+                description: "更新註解內容",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "comment_id": .object([
+                            "type": .string("integer"),
+                            "description": .string("註解 ID")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("新的註解文字")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("comment_id"), .string("text")])
+                ])
+            ),
+            Tool(
+                name: "delete_comment",
+                description: "刪除註解",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "comment_id": .object([
+                            "type": .string("integer"),
+                            "description": .string("要刪除的註解 ID")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("comment_id")])
+                ])
+            ),
+            Tool(
+                name: "list_comments",
+                description: "列出文件中所有註解",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+            Tool(
+                name: "enable_track_changes",
+                description: "啟用修訂追蹤",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "author": .object([
+                            "type": .string("string"),
+                            "description": .string("修訂作者名稱（可選）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+            Tool(
+                name: "disable_track_changes",
+                description: "停用修訂追蹤",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+            Tool(
+                name: "accept_revision",
+                description: "接受指定的修訂",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "revision_id": .object([
+                            "type": .string("integer"),
+                            "description": .string("修訂 ID（使用 'all' 接受所有修訂）")
+                        ]),
+                        "all": .object([
+                            "type": .string("boolean"),
+                            "description": .string("是否接受所有修訂")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+            Tool(
+                name: "reject_revision",
+                description: "拒絕指定的修訂",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "revision_id": .object([
+                            "type": .string("integer"),
+                            "description": .string("修訂 ID")
+                        ]),
+                        "all": .object([
+                            "type": .string("boolean"),
+                            "description": .string("是否拒絕所有修訂")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+
+            // 腳註/尾註
+            Tool(
+                name: "insert_footnote",
+                description: "在指定段落插入腳註（出現在頁面底部）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("腳註內容")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("text")])
+                ])
+            ),
+            Tool(
+                name: "delete_footnote",
+                description: "刪除指定的腳註",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "footnote_id": .object([
+                            "type": .string("integer"),
+                            "description": .string("腳註 ID")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("footnote_id")])
+                ])
+            ),
+            Tool(
+                name: "insert_endnote",
+                description: "在指定段落插入尾註（出現在文件結尾）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("尾註內容")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("text")])
+                ])
+            ),
+            Tool(
+                name: "delete_endnote",
+                description: "刪除指定的尾註",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "endnote_id": .object([
+                            "type": .string("integer"),
+                            "description": .string("尾註 ID")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("endnote_id")])
+                ])
+            ),
+
+            // P7 進階功能
+
+            // 7.1 目錄
+            Tool(
+                name: "insert_toc",
+                description: "插入目錄（Table of Contents）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "title": .object([
+                            "type": .string("string"),
+                            "description": .string("目錄標題")
+                        ]),
+                        "heading_levels": .object([
+                            "type": .string("string"),
+                            "description": .string("包含的標題層級範圍，如 1-3")
+                        ]),
+                        "index": .object([
+                            "type": .string("integer"),
+                            "description": .string("插入位置（從 0 開始），不指定則插入到開頭")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id")])
+                ])
+            ),
+
+            // 7.2 表單控制項
+            Tool(
+                name: "insert_text_field",
+                description: "插入表單文字欄位",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "name": .object([
+                            "type": .string("string"),
+                            "description": .string("欄位名稱")
+                        ]),
+                        "default_value": .object([
+                            "type": .string("string"),
+                            "description": .string("預設值")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("name")])
+                ])
+            ),
+            Tool(
+                name: "insert_checkbox",
+                description: "插入核取方塊",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "name": .object([
+                            "type": .string("string"),
+                            "description": .string("欄位名稱")
+                        ]),
+                        "checked": .object([
+                            "type": .string("boolean"),
+                            "description": .string("是否預設勾選")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("name")])
+                ])
+            ),
+            Tool(
+                name: "insert_dropdown",
+                description: "插入下拉選單",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "name": .object([
+                            "type": .string("string"),
+                            "description": .string("欄位名稱")
+                        ]),
+                        "options": .object([
+                            "type": .string("array"),
+                            "description": .string("選項列表（JSON 陣列格式）")
+                        ]),
+                        "selected_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("預設選中的索引（從 0 開始）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("name"), .string("options")])
+                ])
+            ),
+
+            // 7.3 數學公式
+            Tool(
+                name: "insert_equation",
+                description: "插入數學公式（支援簡化 LaTeX 語法）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "latex": .object([
+                            "type": .string("string"),
+                            "description": .string("LaTeX 格式的公式")
+                        ]),
+                        "display_mode": .object([
+                            "type": .string("boolean"),
+                            "description": .string("是否為獨立區塊（true）或行內（false）")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（行內模式時指定插入位置）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("latex")])
+                ])
+            ),
+
+            // 7.4 進階格式
+            Tool(
+                name: "set_paragraph_border",
+                description: "設定段落邊框",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "border_type": .object([
+                            "type": .string("string"),
+                            "description": .string("邊框類型：single, double, dotted, dashed, thick, wave")
+                        ]),
+                        "color": .object([
+                            "type": .string("string"),
+                            "description": .string("邊框顏色（十六進位 RGB）")
+                        ]),
+                        "size": .object([
+                            "type": .string("integer"),
+                            "description": .string("邊框寬度（1/8 點）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index")])
+                ])
+            ),
+            Tool(
+                name: "set_paragraph_shading",
+                description: "設定段落底色",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "fill": .object([
+                            "type": .string("string"),
+                            "description": .string("填充顏色（十六進位 RGB，如 FFFF00）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("fill")])
+                ])
+            ),
+            Tool(
+                name: "set_character_spacing",
+                description: "設定字元間距",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "spacing": .object([
+                            "type": .string("integer"),
+                            "description": .string("字元間距（1/20 點，正值增加，負值減少）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index")])
+                ])
+            ),
+            Tool(
+                name: "set_text_effect",
+                description: "設定文字效果",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "effect": .object([
+                            "type": .string("string"),
+                            "description": .string("效果類型：blinkBackground, lights, antsBlack, antsRed, shimmer, sparkle, none")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("effect")])
                 ])
             )
         ]
@@ -489,12 +1831,138 @@ actor WordMCPServer {
         // 表格
         case "insert_table":
             return try await insertTable(args: args)
+        case "get_tables":
+            return try await getTables(args: args)
+        case "update_cell":
+            return try await updateCell(args: args)
+        case "delete_table":
+            return try await deleteTable(args: args)
+        case "merge_cells":
+            return try await mergeCells(args: args)
+        case "set_table_style":
+            return try await setTableStyle(args: args)
+
+        // 樣式管理
+        case "list_styles":
+            return try await listStyles(args: args)
+        case "create_style":
+            return try await createStyle(args: args)
+        case "update_style":
+            return try await updateStyle(args: args)
+        case "delete_style":
+            return try await deleteStyle(args: args)
+
+        // 清單/編號
+        case "insert_bullet_list":
+            return try await insertBulletList(args: args)
+        case "insert_numbered_list":
+            return try await insertNumberedList(args: args)
+        case "set_list_level":
+            return try await setListLevel(args: args)
+
+        // 頁面設定
+        case "set_page_size":
+            return try await setPageSize(args: args)
+        case "set_page_margins":
+            return try await setPageMargins(args: args)
+        case "set_page_orientation":
+            return try await setPageOrientation(args: args)
+        case "insert_page_break":
+            return try await insertPageBreak(args: args)
+        case "insert_section_break":
+            return try await insertSectionBreak(args: args)
+
+        // 頁首/頁尾
+        case "add_header":
+            return try await addHeader(args: args)
+        case "update_header":
+            return try await updateHeader(args: args)
+        case "add_footer":
+            return try await addFooter(args: args)
+        case "update_footer":
+            return try await updateFooter(args: args)
+        case "insert_page_number":
+            return try await insertPageNumber(args: args)
+
+        // 圖片
+        case "insert_image":
+            return try await insertImage(args: args)
+        case "update_image":
+            return try await updateImage(args: args)
+        case "delete_image":
+            return try await deleteImage(args: args)
+        case "list_images":
+            return try await listImages(args: args)
+        case "set_image_style":
+            return try await setImageStyle(args: args)
 
         // 匯出
         case "export_text":
             return try await exportText(args: args)
         case "export_markdown":
             return try await exportMarkdown(args: args)
+
+        // 超連結和書籤
+        case "insert_hyperlink":
+            return try await insertHyperlink(args: args)
+        case "insert_internal_link":
+            return try await insertInternalLink(args: args)
+        case "update_hyperlink":
+            return try await updateHyperlink(args: args)
+        case "delete_hyperlink":
+            return try await deleteHyperlink(args: args)
+        case "insert_bookmark":
+            return try await insertBookmark(args: args)
+        case "delete_bookmark":
+            return try await deleteBookmark(args: args)
+
+        // 註解和修訂
+        case "insert_comment":
+            return try await insertComment(args: args)
+        case "update_comment":
+            return try await updateComment(args: args)
+        case "delete_comment":
+            return try await deleteComment(args: args)
+        case "list_comments":
+            return try await listComments(args: args)
+        case "enable_track_changes":
+            return try await enableTrackChanges(args: args)
+        case "disable_track_changes":
+            return try await disableTrackChanges(args: args)
+        case "accept_revision":
+            return try await acceptRevision(args: args)
+        case "reject_revision":
+            return try await rejectRevision(args: args)
+
+        // 腳註/尾註
+        case "insert_footnote":
+            return try await insertFootnote(args: args)
+        case "delete_footnote":
+            return try await deleteFootnote(args: args)
+        case "insert_endnote":
+            return try await insertEndnote(args: args)
+        case "delete_endnote":
+            return try await deleteEndnote(args: args)
+
+        // 進階功能 (P7)
+        case "insert_toc":
+            return try await insertTOC(args: args)
+        case "insert_text_field":
+            return try await insertTextField(args: args)
+        case "insert_checkbox":
+            return try await insertCheckbox(args: args)
+        case "insert_dropdown":
+            return try await insertDropdown(args: args)
+        case "insert_equation":
+            return try await insertEquation(args: args)
+        case "set_paragraph_border":
+            return try await setParagraphBorder(args: args)
+        case "set_paragraph_shading":
+            return try await setParagraphShading(args: args)
+        case "set_character_spacing":
+            return try await setCharacterSpacing(args: args)
+        case "set_text_effect":
+            return try await setTextEffect(args: args)
 
         default:
             throw WordError.unknownTool(name)
@@ -829,6 +2297,771 @@ actor WordMCPServer {
         return "Inserted \(rows)x\(cols) table"
     }
 
+    private func getTables(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let tables = doc.getTables()
+        if tables.isEmpty {
+            return "No tables in document"
+        }
+
+        var result = "Tables in document:\n"
+        for (index, table) in tables.enumerated() {
+            let rows = table.rows.count
+            let cols = table.rows.first?.cells.count ?? 0
+            result += "[\(index)] \(rows)x\(cols) table\n"
+
+            // 顯示表格內容預覽
+            for (rowIdx, row) in table.rows.prefix(3).enumerated() {
+                let cellPreviews = row.cells.prefix(3).map { cell -> String in
+                    let preview = String(cell.getText().prefix(15))
+                    return preview.isEmpty ? "(empty)" : preview
+                }
+                result += "  Row \(rowIdx): \(cellPreviews.joined(separator: " | "))\n"
+            }
+            if table.rows.count > 3 {
+                result += "  ... (\(table.rows.count - 3) more rows)\n"
+            }
+        }
+        return result
+    }
+
+    private func updateCell(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let tableIndex = args["table_index"]?.intValue else {
+            throw WordError.missingParameter("table_index")
+        }
+        guard let row = args["row"]?.intValue else {
+            throw WordError.missingParameter("row")
+        }
+        guard let col = args["col"]?.intValue else {
+            throw WordError.missingParameter("col")
+        }
+        guard let text = args["text"]?.stringValue else {
+            throw WordError.missingParameter("text")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        try doc.updateCell(tableIndex: tableIndex, row: row, col: col, text: text)
+        openDocuments[docId] = doc
+
+        return "Updated cell at table[\(tableIndex)][\(row)][\(col)]"
+    }
+
+    private func deleteTable(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let tableIndex = args["table_index"]?.intValue else {
+            throw WordError.missingParameter("table_index")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        try doc.deleteTable(at: tableIndex)
+        openDocuments[docId] = doc
+
+        return "Deleted table at index \(tableIndex)"
+    }
+
+    private func mergeCells(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let tableIndex = args["table_index"]?.intValue else {
+            throw WordError.missingParameter("table_index")
+        }
+        guard let direction = args["direction"]?.stringValue else {
+            throw WordError.missingParameter("direction")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        switch direction.lowercased() {
+        case "horizontal":
+            guard let row = args["row"]?.intValue else {
+                throw WordError.missingParameter("row")
+            }
+            guard let col = args["col"]?.intValue else {
+                throw WordError.missingParameter("col")
+            }
+            guard let endCol = args["end_col"]?.intValue else {
+                throw WordError.missingParameter("end_col")
+            }
+            try doc.mergeCellsHorizontal(tableIndex: tableIndex, row: row, startCol: col, endCol: endCol)
+            openDocuments[docId] = doc
+            return "Merged cells horizontally: row \(row), columns \(col) to \(endCol)"
+
+        case "vertical":
+            guard let row = args["row"]?.intValue else {
+                throw WordError.missingParameter("row")
+            }
+            guard let col = args["col"]?.intValue else {
+                throw WordError.missingParameter("col")
+            }
+            guard let endRow = args["end_row"]?.intValue else {
+                throw WordError.missingParameter("end_row")
+            }
+            try doc.mergeCellsVertical(tableIndex: tableIndex, col: col, startRow: row, endRow: endRow)
+            openDocuments[docId] = doc
+            return "Merged cells vertically: column \(col), rows \(row) to \(endRow)"
+
+        default:
+            throw WordError.invalidParameter("direction", "Must be 'horizontal' or 'vertical'")
+        }
+    }
+
+    private func setTableStyle(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let tableIndex = args["table_index"]?.intValue else {
+            throw WordError.missingParameter("table_index")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        var results: [String] = []
+
+        // 設定邊框
+        if let borderStyle = args["border_style"]?.stringValue {
+            let style = BorderStyle(rawValue: borderStyle) ?? .single
+            let size = args["border_size"]?.intValue ?? 4
+            let color = args["border_color"]?.stringValue ?? "000000"
+
+            let border = Border(style: style, size: size, color: color)
+            let borders = TableBorders.all(border)
+
+            try doc.setTableBorders(tableIndex: tableIndex, borders: borders)
+            results.append("Set border style: \(borderStyle)")
+        }
+
+        // 設定儲存格底色
+        if let cellRow = args["cell_row"]?.intValue,
+           let cellCol = args["cell_col"]?.intValue,
+           let shadingColor = args["shading_color"]?.stringValue {
+            let shading = CellShading(fill: shadingColor)
+            try doc.setCellShading(tableIndex: tableIndex, row: cellRow, col: cellCol, shading: shading)
+            results.append("Set cell shading at [\(cellRow)][\(cellCol)]: \(shadingColor)")
+        }
+
+        openDocuments[docId] = doc
+
+        if results.isEmpty {
+            return "No style changes applied"
+        }
+        return results.joined(separator: "\n")
+    }
+
+    // MARK: - Style Management
+
+    private func listStyles(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let styles = doc.getStyles()
+        if styles.isEmpty {
+            return "No styles defined"
+        }
+
+        var result = "Available Styles:\n"
+        for style in styles {
+            let defaultMark = style.isDefault ? " (default)" : ""
+            let basedOnInfo = style.basedOn.map { " [based on: \($0)]" } ?? ""
+            result += "- \(style.id) (\(style.name)) - \(style.type.rawValue)\(defaultMark)\(basedOnInfo)\n"
+
+            // 顯示格式資訊
+            if let runProps = style.runProperties {
+                var formats: [String] = []
+                if let fontName = runProps.fontName { formats.append("font: \(fontName)") }
+                if let fontSize = runProps.fontSize { formats.append("size: \(fontSize / 2)pt") }
+                if runProps.bold == true { formats.append("bold") }
+                if runProps.italic == true { formats.append("italic") }
+                if let color = runProps.color { formats.append("color: #\(color)") }
+                if !formats.isEmpty {
+                    result += "    Text: \(formats.joined(separator: ", "))\n"
+                }
+            }
+        }
+        return result
+    }
+
+    private func createStyle(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let styleId = args["style_id"]?.stringValue else {
+            throw WordError.missingParameter("style_id")
+        }
+        guard let name = args["name"]?.stringValue else {
+            throw WordError.missingParameter("name")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        // 解析樣式類型
+        let typeStr = args["type"]?.stringValue ?? "paragraph"
+        let styleType = StyleType(rawValue: typeStr) ?? .paragraph
+
+        // 解析段落屬性
+        var paraProps = ParagraphProperties()
+        if let alignment = args["alignment"]?.stringValue {
+            paraProps.alignment = Alignment(rawValue: alignment)
+        }
+        if let spaceBefore = args["space_before"]?.intValue {
+            if paraProps.spacing == nil { paraProps.spacing = Spacing() }
+            paraProps.spacing?.before = spaceBefore * 20
+        }
+        if let spaceAfter = args["space_after"]?.intValue {
+            if paraProps.spacing == nil { paraProps.spacing = Spacing() }
+            paraProps.spacing?.after = spaceAfter * 20
+        }
+
+        // 解析 Run 屬性
+        var runProps = RunProperties()
+        if let fontName = args["font_name"]?.stringValue { runProps.fontName = fontName }
+        if let fontSize = args["font_size"]?.intValue { runProps.fontSize = fontSize * 2 }
+        if let bold = args["bold"]?.boolValue { runProps.bold = bold }
+        if let italic = args["italic"]?.boolValue { runProps.italic = italic }
+        if let color = args["color"]?.stringValue { runProps.color = color }
+
+        let style = Style(
+            id: styleId,
+            name: name,
+            type: styleType,
+            basedOn: args["based_on"]?.stringValue,
+            nextStyle: args["next_style"]?.stringValue,
+            isDefault: false,
+            isQuickStyle: true,
+            paragraphProperties: paraProps,
+            runProperties: runProps
+        )
+
+        try doc.addStyle(style)
+        openDocuments[docId] = doc
+
+        return "Created style '\(styleId)' (\(name))"
+    }
+
+    private func updateStyle(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let styleId = args["style_id"]?.stringValue else {
+            throw WordError.missingParameter("style_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        // 建立更新資料
+        var paraProps: ParagraphProperties? = nil
+        if let alignment = args["alignment"]?.stringValue {
+            paraProps = ParagraphProperties()
+            paraProps?.alignment = Alignment(rawValue: alignment)
+        }
+
+        var runProps: RunProperties? = nil
+        if args["font_name"] != nil || args["font_size"] != nil ||
+           args["bold"] != nil || args["italic"] != nil || args["color"] != nil {
+            runProps = RunProperties()
+            if let fontName = args["font_name"]?.stringValue { runProps?.fontName = fontName }
+            if let fontSize = args["font_size"]?.intValue { runProps?.fontSize = fontSize * 2 }
+            if let bold = args["bold"]?.boolValue { runProps?.bold = bold }
+            if let italic = args["italic"]?.boolValue { runProps?.italic = italic }
+            if let color = args["color"]?.stringValue { runProps?.color = color }
+        }
+
+        let updates = StyleUpdate(
+            name: args["name"]?.stringValue,
+            paragraphProperties: paraProps,
+            runProperties: runProps
+        )
+
+        try doc.updateStyle(id: styleId, with: updates)
+        openDocuments[docId] = doc
+
+        return "Updated style '\(styleId)'"
+    }
+
+    private func deleteStyle(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let styleId = args["style_id"]?.stringValue else {
+            throw WordError.missingParameter("style_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        try doc.deleteStyle(id: styleId)
+        openDocuments[docId] = doc
+
+        return "Deleted style '\(styleId)'"
+    }
+
+    // MARK: - List Operations
+
+    private func insertBulletList(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let itemsArray = args["items"]?.arrayValue else {
+            throw WordError.missingParameter("items")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let items = itemsArray.compactMap { $0.stringValue }
+        if items.isEmpty {
+            throw WordError.invalidParameter("items", "Must contain at least one item")
+        }
+
+        let index = args["index"]?.intValue
+        let numId = doc.insertBulletList(items: items, at: index)
+        openDocuments[docId] = doc
+
+        return "Inserted bullet list with \(items.count) items (numId: \(numId))"
+    }
+
+    private func insertNumberedList(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let itemsArray = args["items"]?.arrayValue else {
+            throw WordError.missingParameter("items")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let items = itemsArray.compactMap { $0.stringValue }
+        if items.isEmpty {
+            throw WordError.invalidParameter("items", "Must contain at least one item")
+        }
+
+        let index = args["index"]?.intValue
+        let numId = doc.insertNumberedList(items: items, at: index)
+        openDocuments[docId] = doc
+
+        return "Inserted numbered list with \(items.count) items (numId: \(numId))"
+    }
+
+    private func setListLevel(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let level = args["level"]?.intValue else {
+            throw WordError.missingParameter("level")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        try doc.setListLevel(paragraphIndex: paragraphIndex, level: level)
+        openDocuments[docId] = doc
+
+        return "Set list level to \(level) for paragraph \(paragraphIndex)"
+    }
+
+    // MARK: - Page Settings
+
+    private func setPageSize(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let sizeName = args["size"]?.stringValue else {
+            throw WordError.missingParameter("size")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        try doc.setPageSize(name: sizeName)
+        openDocuments[docId] = doc
+
+        let size = doc.sectionProperties.pageSize
+        return "Set page size to \(size.name) (\(size.widthInInches)\" x \(size.heightInInches)\")"
+    }
+
+    private func setPageMargins(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        // 優先使用預設名稱
+        if let preset = args["preset"]?.stringValue {
+            try doc.setPageMargins(name: preset)
+        } else {
+            // 使用自訂值
+            let top = args["top"]?.intValue
+            let right = args["right"]?.intValue
+            let bottom = args["bottom"]?.intValue
+            let left = args["left"]?.intValue
+
+            doc.setPageMargins(top: top, right: right, bottom: bottom, left: left)
+        }
+
+        openDocuments[docId] = doc
+
+        let margins = doc.sectionProperties.pageMargins
+        return "Set page margins to \(margins.name) (top: \(margins.top), right: \(margins.right), bottom: \(margins.bottom), left: \(margins.left) twips)"
+    }
+
+    private func setPageOrientation(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let orientationStr = args["orientation"]?.stringValue else {
+            throw WordError.missingParameter("orientation")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        guard let orientation = PageOrientation(rawValue: orientationStr.lowercased()) else {
+            throw WordError.invalidParameter("orientation", "Must be 'portrait' or 'landscape'")
+        }
+
+        doc.setPageOrientation(orientation)
+        openDocuments[docId] = doc
+
+        return "Set page orientation to \(orientation.rawValue)"
+    }
+
+    private func insertPageBreak(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let index = args["at_index"]?.intValue
+        doc.insertPageBreak(at: index)
+        openDocuments[docId] = doc
+
+        if let index = index {
+            return "Inserted page break at position \(index)"
+        } else {
+            return "Inserted page break at end of document"
+        }
+    }
+
+    private func insertSectionBreak(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let typeStr = args["type"]?.stringValue ?? "nextPage"
+        guard let breakType = SectionBreakType(rawValue: typeStr) else {
+            throw WordError.invalidParameter("type", "Must be 'nextPage', 'continuous', 'evenPage', or 'oddPage'")
+        }
+
+        let index = args["at_index"]?.intValue
+        doc.insertSectionBreak(type: breakType, at: index)
+        openDocuments[docId] = doc
+
+        if let index = index {
+            return "Inserted \(breakType.rawValue) section break at position \(index)"
+        } else {
+            return "Inserted \(breakType.rawValue) section break at end of document"
+        }
+    }
+
+    // MARK: - Header/Footer
+
+    private func addHeader(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let text = args["text"]?.stringValue else {
+            throw WordError.missingParameter("text")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let typeStr = args["type"]?.stringValue ?? "default"
+        let headerType: HeaderFooterType
+        switch typeStr.lowercased() {
+        case "first": headerType = .first
+        case "even": headerType = .even
+        default: headerType = .default
+        }
+
+        let header = doc.addHeader(text: text, type: headerType)
+        openDocuments[docId] = doc
+
+        return "Added header with id '\(header.id)' (type: \(headerType.rawValue))"
+    }
+
+    private func updateHeader(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let headerId = args["header_id"]?.stringValue else {
+            throw WordError.missingParameter("header_id")
+        }
+        guard let text = args["text"]?.stringValue else {
+            throw WordError.missingParameter("text")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        try doc.updateHeader(id: headerId, text: text)
+        openDocuments[docId] = doc
+
+        return "Updated header '\(headerId)'"
+    }
+
+    private func addFooter(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let typeStr = args["type"]?.stringValue ?? "default"
+        let footerType: HeaderFooterType
+        switch typeStr.lowercased() {
+        case "first": footerType = .first
+        case "even": footerType = .even
+        default: footerType = .default
+        }
+
+        let footer: Footer
+        if let text = args["text"]?.stringValue {
+            footer = doc.addFooter(text: text, type: footerType)
+        } else {
+            // 沒有提供文字，使用頁碼
+            footer = doc.addFooterWithPageNumber(format: .simple, type: footerType)
+        }
+
+        openDocuments[docId] = doc
+
+        return "Added footer with id '\(footer.id)' (type: \(footerType.rawValue))"
+    }
+
+    private func updateFooter(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let footerId = args["footer_id"]?.stringValue else {
+            throw WordError.missingParameter("footer_id")
+        }
+        guard let text = args["text"]?.stringValue else {
+            throw WordError.missingParameter("text")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        try doc.updateFooter(id: footerId, text: text)
+        openDocuments[docId] = doc
+
+        return "Updated footer '\(footerId)'"
+    }
+
+    private func insertPageNumber(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        // 解析頁碼格式
+        let formatStr = args["format"]?.stringValue ?? "simple"
+        let format: PageNumberFormat
+        switch formatStr.lowercased() {
+        case "simple": format = .simple
+        case "pageoftotal": format = .pageOfTotal
+        case "withdash": format = .withDash
+        default:
+            // 自訂格式（包含 # 的字串）
+            if formatStr.contains("#") {
+                format = .withText(formatStr)
+            } else {
+                format = .simple
+            }
+        }
+
+        let footer = doc.addFooterWithPageNumber(format: format, type: .default)
+        openDocuments[docId] = doc
+
+        return "Inserted page number in footer '\(footer.id)' with format '\(formatStr)'"
+    }
+
+    // MARK: - Image Operations
+
+    private func insertImage(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let base64 = args["base64"]?.stringValue else {
+            throw WordError.missingParameter("base64")
+        }
+        guard let fileName = args["file_name"]?.stringValue else {
+            throw WordError.missingParameter("file_name")
+        }
+        guard let width = args["width"]?.intValue else {
+            throw WordError.missingParameter("width")
+        }
+        guard let height = args["height"]?.intValue else {
+            throw WordError.missingParameter("height")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let index = args["index"]?.intValue
+        let name = args["name"]?.stringValue ?? "Picture"
+        let description = args["description"]?.stringValue ?? ""
+
+        let imageId = try doc.insertImage(
+            base64: base64,
+            fileName: fileName,
+            widthPx: width,
+            heightPx: height,
+            at: index,
+            name: name,
+            description: description
+        )
+
+        openDocuments[docId] = doc
+
+        return "Inserted image '\(fileName)' with id '\(imageId)' (\(width)x\(height) pixels)"
+    }
+
+    private func updateImage(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let imageId = args["image_id"]?.stringValue else {
+            throw WordError.missingParameter("image_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let width = args["width"]?.intValue
+        let height = args["height"]?.intValue
+
+        try doc.updateImage(imageId: imageId, widthPx: width, heightPx: height)
+        openDocuments[docId] = doc
+
+        var changes: [String] = []
+        if let w = width { changes.append("width: \(w)px") }
+        if let h = height { changes.append("height: \(h)px") }
+
+        return "Updated image '\(imageId)': \(changes.joined(separator: ", "))"
+    }
+
+    private func deleteImage(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let imageId = args["image_id"]?.stringValue else {
+            throw WordError.missingParameter("image_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        try doc.deleteImage(imageId: imageId)
+        openDocuments[docId] = doc
+
+        return "Deleted image '\(imageId)'"
+    }
+
+    private func listImages(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let images = doc.getImages()
+
+        if images.isEmpty {
+            return "No images in document"
+        }
+
+        var result = "Found \(images.count) image(s):\n"
+        for img in images {
+            result += "- id: \(img.id), file: \(img.fileName), size: \(img.widthPx)x\(img.heightPx)px\n"
+        }
+
+        return result
+    }
+
+    private func setImageStyle(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let imageId = args["image_id"]?.stringValue else {
+            throw WordError.missingParameter("image_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let hasBorder = args["has_border"]?.boolValue
+        let borderColor = args["border_color"]?.stringValue
+        let borderWidth = args["border_width"]?.intValue
+        let hasShadow = args["has_shadow"]?.boolValue
+
+        try doc.setImageStyle(
+            imageId: imageId,
+            hasBorder: hasBorder,
+            borderColor: borderColor,
+            borderWidth: borderWidth,
+            hasShadow: hasShadow
+        )
+
+        openDocuments[docId] = doc
+
+        var changes: [String] = []
+        if let border = hasBorder { changes.append("border: \(border)") }
+        if let color = borderColor { changes.append("color: \(color)") }
+        if let width = borderWidth { changes.append("width: \(width)") }
+        if let shadow = hasShadow { changes.append("shadow: \(shadow)") }
+
+        return "Updated image style for '\(imageId)': \(changes.joined(separator: ", "))"
+    }
+
     // MARK: - Export
 
     private func exportText(args: [String: Value]) async throws -> String {
@@ -863,5 +3096,642 @@ actor WordMCPServer {
         try markdown.write(toFile: path, atomically: true, encoding: .utf8)
 
         return "Exported Markdown to: \(path)"
+    }
+
+    // MARK: - Hyperlink and Bookmark Operations
+
+    private func insertHyperlink(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let url = args["url"]?.stringValue else {
+            throw WordError.missingParameter("url")
+        }
+        guard let text = args["text"]?.stringValue else {
+            throw WordError.missingParameter("text")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let paragraphIndex = args["paragraph_index"]?.intValue
+        let tooltip = args["tooltip"]?.stringValue
+
+        let hyperlinkId = doc.insertHyperlink(
+            url: url,
+            text: text,
+            at: paragraphIndex,
+            tooltip: tooltip
+        )
+
+        openDocuments[docId] = doc
+
+        return "Inserted hyperlink '\(text)' -> \(url) with id '\(hyperlinkId)'"
+    }
+
+    private func insertInternalLink(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let bookmarkName = args["bookmark_name"]?.stringValue else {
+            throw WordError.missingParameter("bookmark_name")
+        }
+        guard let text = args["text"]?.stringValue else {
+            throw WordError.missingParameter("text")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let paragraphIndex = args["paragraph_index"]?.intValue
+        let tooltip = args["tooltip"]?.stringValue
+
+        let hyperlinkId = doc.insertInternalLink(
+            bookmarkName: bookmarkName,
+            text: text,
+            at: paragraphIndex,
+            tooltip: tooltip
+        )
+
+        openDocuments[docId] = doc
+
+        return "Inserted internal link '\(text)' -> bookmark '\(bookmarkName)' with id '\(hyperlinkId)'"
+    }
+
+    private func updateHyperlink(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let hyperlinkId = args["hyperlink_id"]?.stringValue else {
+            throw WordError.missingParameter("hyperlink_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let text = args["text"]?.stringValue
+        let url = args["url"]?.stringValue
+
+        try doc.updateHyperlink(hyperlinkId: hyperlinkId, text: text, url: url)
+        openDocuments[docId] = doc
+
+        var changes: [String] = []
+        if let text = text { changes.append("text: '\(text)'") }
+        if let url = url { changes.append("url: '\(url)'") }
+
+        return "Updated hyperlink '\(hyperlinkId)': \(changes.joined(separator: ", "))"
+    }
+
+    private func deleteHyperlink(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let hyperlinkId = args["hyperlink_id"]?.stringValue else {
+            throw WordError.missingParameter("hyperlink_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        try doc.deleteHyperlink(hyperlinkId: hyperlinkId)
+        openDocuments[docId] = doc
+
+        return "Deleted hyperlink '\(hyperlinkId)'"
+    }
+
+    private func insertBookmark(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let name = args["name"]?.stringValue else {
+            throw WordError.missingParameter("name")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let paragraphIndex = args["paragraph_index"]?.intValue
+
+        let bookmarkId = try doc.insertBookmark(name: name, at: paragraphIndex)
+        openDocuments[docId] = doc
+
+        return "Inserted bookmark '\(name)' with id \(bookmarkId)"
+    }
+
+    private func deleteBookmark(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let name = args["name"]?.stringValue else {
+            throw WordError.missingParameter("name")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        try doc.deleteBookmark(name: name)
+        openDocuments[docId] = doc
+
+        return "Deleted bookmark '\(name)'"
+    }
+
+    // MARK: - Comment and Revision Operations
+
+    private func insertComment(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let text = args["text"]?.stringValue else {
+            throw WordError.missingParameter("text")
+        }
+        guard let author = args["author"]?.stringValue else {
+            throw WordError.missingParameter("author")
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let commentId = try doc.insertComment(text: text, author: author, paragraphIndex: paragraphIndex)
+        openDocuments[docId] = doc
+
+        return "Inserted comment with id \(commentId) by '\(author)'"
+    }
+
+    private func updateComment(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let commentId = args["comment_id"]?.intValue else {
+            throw WordError.missingParameter("comment_id")
+        }
+        guard let text = args["text"]?.stringValue else {
+            throw WordError.missingParameter("text")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        try doc.updateComment(commentId: commentId, text: text)
+        openDocuments[docId] = doc
+
+        return "Updated comment \(commentId)"
+    }
+
+    private func deleteComment(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let commentId = args["comment_id"]?.intValue else {
+            throw WordError.missingParameter("comment_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        try doc.deleteComment(commentId: commentId)
+        openDocuments[docId] = doc
+
+        return "Deleted comment \(commentId)"
+    }
+
+    private func listComments(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard let doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let comments = doc.getComments()
+        if comments.isEmpty {
+            return "No comments in document"
+        }
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
+
+        var result = "Comments (\(comments.count)):\n"
+        for comment in comments {
+            result += "- [ID: \(comment.id)] \(comment.author) (\(dateFormatter.string(from: comment.date))): \"\(comment.text)\" (para \(comment.paragraphIndex))\n"
+        }
+
+        return result
+    }
+
+    private func enableTrackChanges(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let author = args["author"]?.stringValue ?? "Unknown"
+        doc.enableTrackChanges(author: author)
+        openDocuments[docId] = doc
+
+        return "Track changes enabled for '\(author)'"
+    }
+
+    private func disableTrackChanges(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        doc.disableTrackChanges()
+        openDocuments[docId] = doc
+
+        return "Track changes disabled"
+    }
+
+    private func acceptRevision(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let acceptAll = args["all"]?.boolValue ?? false
+
+        if acceptAll {
+            doc.acceptAllRevisions()
+            openDocuments[docId] = doc
+            return "Accepted all revisions"
+        } else {
+            guard let revisionId = args["revision_id"]?.intValue else {
+                throw WordError.missingParameter("revision_id")
+            }
+            try doc.acceptRevision(revisionId: revisionId)
+            openDocuments[docId] = doc
+            return "Accepted revision \(revisionId)"
+        }
+    }
+
+    private func rejectRevision(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let rejectAll = args["all"]?.boolValue ?? false
+
+        if rejectAll {
+            doc.rejectAllRevisions()
+            openDocuments[docId] = doc
+            return "Rejected all revisions"
+        } else {
+            guard let revisionId = args["revision_id"]?.intValue else {
+                throw WordError.missingParameter("revision_id")
+            }
+            try doc.rejectRevision(revisionId: revisionId)
+            openDocuments[docId] = doc
+            return "Rejected revision \(revisionId)"
+        }
+    }
+
+    // MARK: - Footnotes/Endnotes
+
+    private func insertFootnote(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let text = args["text"]?.stringValue else {
+            throw WordError.missingParameter("text")
+        }
+
+        let footnoteId = try doc.insertFootnote(text: text, paragraphIndex: paragraphIndex)
+        openDocuments[docId] = doc
+        return "Inserted footnote \(footnoteId) at paragraph \(paragraphIndex)"
+    }
+
+    private func deleteFootnote(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let footnoteId = args["footnote_id"]?.intValue else {
+            throw WordError.missingParameter("footnote_id")
+        }
+
+        try doc.deleteFootnote(footnoteId: footnoteId)
+        openDocuments[docId] = doc
+        return "Deleted footnote \(footnoteId)"
+    }
+
+    private func insertEndnote(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let text = args["text"]?.stringValue else {
+            throw WordError.missingParameter("text")
+        }
+
+        let endnoteId = try doc.insertEndnote(text: text, paragraphIndex: paragraphIndex)
+        openDocuments[docId] = doc
+        return "Inserted endnote \(endnoteId) at paragraph \(paragraphIndex)"
+    }
+
+    private func deleteEndnote(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let endnoteId = args["endnote_id"]?.intValue else {
+            throw WordError.missingParameter("endnote_id")
+        }
+
+        try doc.deleteEndnote(endnoteId: endnoteId)
+        openDocuments[docId] = doc
+        return "Deleted endnote \(endnoteId)"
+    }
+
+    // MARK: - Advanced Features (P7)
+
+    private func insertTOC(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+
+        let index = args["index"]?.intValue
+        let title = args["title"]?.stringValue
+        let minLevel = args["min_level"]?.intValue ?? 1
+        let maxLevel = args["max_level"]?.intValue ?? 3
+        let includePageNumbers = args["include_page_numbers"]?.boolValue ?? true
+        let useHyperlinks = args["use_hyperlinks"]?.boolValue ?? true
+
+        doc.insertTableOfContents(
+            at: index,
+            title: title,
+            headingLevels: minLevel...maxLevel,
+            includePageNumbers: includePageNumbers,
+            useHyperlinks: useHyperlinks
+        )
+        openDocuments[docId] = doc
+
+        return "Inserted table of contents (heading levels \(minLevel)-\(maxLevel))"
+    }
+
+    private func insertTextField(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let name = args["name"]?.stringValue else {
+            throw WordError.missingParameter("name")
+        }
+
+        let defaultValue = args["default_value"]?.stringValue
+        let maxLength = args["max_length"]?.intValue
+
+        try doc.insertTextField(at: paragraphIndex, name: name, defaultValue: defaultValue, maxLength: maxLength)
+        openDocuments[docId] = doc
+
+        return "Inserted text field '\(name)' at paragraph \(paragraphIndex)"
+    }
+
+    private func insertCheckbox(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let name = args["name"]?.stringValue else {
+            throw WordError.missingParameter("name")
+        }
+
+        let isChecked = args["is_checked"]?.boolValue ?? false
+
+        try doc.insertCheckbox(at: paragraphIndex, name: name, isChecked: isChecked)
+        openDocuments[docId] = doc
+
+        return "Inserted checkbox '\(name)' (checked: \(isChecked)) at paragraph \(paragraphIndex)"
+    }
+
+    private func insertDropdown(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let name = args["name"]?.stringValue else {
+            throw WordError.missingParameter("name")
+        }
+        guard let optionsValue = args["options"] else {
+            throw WordError.missingParameter("options")
+        }
+
+        // 解析 options array
+        var options: [String] = []
+        if case .array(let arr) = optionsValue {
+            for item in arr {
+                if let str = item.stringValue {
+                    options.append(str)
+                }
+            }
+        }
+
+        if options.isEmpty {
+            throw WordError.missingParameter("options (array of strings)")
+        }
+
+        let selectedIndex = args["selected_index"]?.intValue ?? 0
+
+        try doc.insertDropdown(at: paragraphIndex, name: name, options: options, selectedIndex: selectedIndex)
+        openDocuments[docId] = doc
+
+        return "Inserted dropdown '\(name)' with \(options.count) options at paragraph \(paragraphIndex)"
+    }
+
+    private func insertEquation(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let latex = args["latex"]?.stringValue else {
+            throw WordError.missingParameter("latex")
+        }
+
+        let paragraphIndex = args["paragraph_index"]?.intValue
+        let displayMode = args["display_mode"]?.boolValue ?? false
+
+        doc.insertEquation(at: paragraphIndex, latex: latex, displayMode: displayMode)
+        openDocuments[docId] = doc
+
+        return "Inserted equation (display mode: \(displayMode))"
+    }
+
+    private func setParagraphBorder(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+
+        let typeStr = args["type"]?.stringValue ?? "single"
+        let size = args["size"]?.intValue ?? 4
+        let color = args["color"]?.stringValue ?? "000000"
+        let space = args["space"]?.intValue ?? 1
+
+        // 解析邊框類型
+        let borderType = ParagraphBorderType(rawValue: typeStr) ?? .single
+        let borderStyle = ParagraphBorderStyle(type: borderType, color: color, size: size, space: space)
+
+        // 解析要套用的邊
+        var topStyle: ParagraphBorderStyle? = borderStyle
+        var bottomStyle: ParagraphBorderStyle? = borderStyle
+        var leftStyle: ParagraphBorderStyle? = borderStyle
+        var rightStyle: ParagraphBorderStyle? = borderStyle
+
+        if let sidesValue = args["sides"] {
+            if case .array(let arr) = sidesValue {
+                topStyle = nil; bottomStyle = nil; leftStyle = nil; rightStyle = nil
+                for item in arr {
+                    if let side = item.stringValue {
+                        switch side.lowercased() {
+                        case "top": topStyle = borderStyle
+                        case "bottom": bottomStyle = borderStyle
+                        case "left": leftStyle = borderStyle
+                        case "right": rightStyle = borderStyle
+                        default: break
+                        }
+                    }
+                }
+            }
+        }
+
+        let border = ParagraphBorder(
+            top: topStyle,
+            bottom: bottomStyle,
+            left: leftStyle,
+            right: rightStyle
+        )
+
+        try doc.setParagraphBorder(at: paragraphIndex, border: border)
+        openDocuments[docId] = doc
+
+        return "Set border on paragraph \(paragraphIndex)"
+    }
+
+    private func setParagraphShading(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let fill = args["fill"]?.stringValue else {
+            throw WordError.missingParameter("fill")
+        }
+
+        var pattern: ShadingPattern? = nil
+        if let patternStr = args["pattern"]?.stringValue {
+            pattern = ShadingPattern(rawValue: patternStr)
+        }
+
+        try doc.setParagraphShading(at: paragraphIndex, fill: fill, pattern: pattern)
+        openDocuments[docId] = doc
+
+        return "Set shading on paragraph \(paragraphIndex) (fill: #\(fill))"
+    }
+
+    private func setCharacterSpacing(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+
+        let spacing = args["spacing"]?.intValue
+        let position = args["position"]?.intValue
+        let kern = args["kern"]?.intValue
+
+        try doc.setCharacterSpacing(at: paragraphIndex, spacing: spacing, position: position, kern: kern)
+        openDocuments[docId] = doc
+
+        var changes: [String] = []
+        if let spacing = spacing { changes.append("spacing: \(spacing)") }
+        if let position = position { changes.append("position: \(position)") }
+        if let kern = kern { changes.append("kern: \(kern)") }
+
+        return "Set character spacing on paragraph \(paragraphIndex): \(changes.joined(separator: ", "))"
+    }
+
+    private func setTextEffect(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let effectType = args["effect"]?.stringValue else {
+            throw WordError.missingParameter("effect")
+        }
+
+        // TextEffect 是 enum：blinkBackground, lights, antsBlack, antsRed, shimmer, sparkle, none
+        guard let effect = TextEffect(rawValue: effectType) else {
+            throw WordError.invalidParameter("effect", "Unknown effect type: \(effectType). Valid: blinkBackground, lights, antsBlack, antsRed, shimmer, sparkle, none")
+        }
+
+        try doc.setTextEffect(at: paragraphIndex, effect: effect)
+        openDocuments[docId] = doc
+
+        return "Applied '\(effectType)' effect to paragraph \(paragraphIndex)"
     }
 }

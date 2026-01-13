@@ -19,10 +19,15 @@ struct DocxWriter {
         // 2. 建立目錄結構
         try createDirectoryStructure(at: tempDir)
 
-        // 3. 寫入各個 XML 檔案
-        try writeContentTypes(to: tempDir)
+        // 3. 計算各種標記
+        let hasNumbering = !document.numbering.abstractNums.isEmpty
+        let hasHeaders = !document.headers.isEmpty
+        let hasFooters = !document.footers.isEmpty
+
+        // 4. 寫入各個 XML 檔案
+        try writeContentTypes(to: tempDir, document: document)
         try writeRelationships(to: tempDir)
-        try writeDocumentRelationships(to: tempDir)
+        try writeDocumentRelationships(to: tempDir, document: document)
         try writeDocument(document, to: tempDir)
         try writeStyles(document.styles, to: tempDir)
         try writeSettings(to: tempDir)
@@ -30,7 +35,46 @@ struct DocxWriter {
         try writeCoreProperties(document.properties, to: tempDir)
         try writeAppProperties(to: tempDir)
 
-        // 4. 壓縮成 ZIP
+        // 寫入編號定義（如果有）
+        if hasNumbering {
+            try writeNumbering(document.numbering, to: tempDir)
+        }
+
+        // 寫入頁首（如果有）
+        if hasHeaders {
+            for header in document.headers {
+                try writeHeader(header, to: tempDir)
+            }
+        }
+
+        // 寫入頁尾（如果有）
+        if hasFooters {
+            for footer in document.footers {
+                try writeFooter(footer, to: tempDir)
+            }
+        }
+
+        // 寫入圖片（如果有）
+        if !document.images.isEmpty {
+            try writeImages(document.images, to: tempDir)
+        }
+
+        // 寫入註解（如果有）
+        if !document.comments.comments.isEmpty {
+            try writeComments(document.comments, to: tempDir)
+        }
+
+        // 寫入腳註（如果有）
+        if !document.footnotes.footnotes.isEmpty {
+            try writeFootnotes(document.footnotes, to: tempDir)
+        }
+
+        // 寫入尾註（如果有）
+        if !document.endnotes.endnotes.isEmpty {
+            try writeEndnotes(document.endnotes, to: tempDir)
+        }
+
+        // 5. 壓縮成 ZIP
         try ZipHelper.zip(tempDir, to: url)
     }
 
@@ -41,6 +85,7 @@ struct DocxWriter {
             "_rels",
             "word",
             "word/_rels",
+            "word/media",  // 圖片媒體目錄
             "docProps"
         ]
 
@@ -52,20 +97,71 @@ struct DocxWriter {
 
     // MARK: - Content Types
 
-    private static func writeContentTypes(to baseURL: URL) throws {
-        let xml = """
+    private static func writeContentTypes(to baseURL: URL, document: WordDocument) throws {
+        let hasNumbering = !document.numbering.abstractNums.isEmpty
+
+        var xml = """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
             <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
             <Default Extension="xml" ContentType="application/xml"/>
+            <Default Extension="png" ContentType="image/png"/>
+            <Default Extension="jpeg" ContentType="image/jpeg"/>
+            <Default Extension="jpg" ContentType="image/jpeg"/>
+            <Default Extension="gif" ContentType="image/gif"/>
+            <Default Extension="bmp" ContentType="image/bmp"/>
+            <Default Extension="tiff" ContentType="image/tiff"/>
+            <Default Extension="webp" ContentType="image/webp"/>
             <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
             <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
             <Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
             <Override PartName="/word/fontTable.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml"/>
             <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
             <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
-        </Types>
         """
+
+        if hasNumbering {
+            xml += """
+                <Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/>
+            """
+        }
+
+        // 頁首
+        for header in document.headers {
+            xml += """
+                <Override PartName="/word/\(header.fileName)" ContentType="\(Header.contentType)"/>
+            """
+        }
+
+        // 頁尾
+        for footer in document.footers {
+            xml += """
+                <Override PartName="/word/\(footer.fileName)" ContentType="\(Footer.contentType)"/>
+            """
+        }
+
+        // 註解
+        if !document.comments.comments.isEmpty {
+            xml += """
+                <Override PartName="/word/comments.xml" ContentType="\(CommentsCollection.contentType)"/>
+            """
+        }
+
+        // 腳註
+        if !document.footnotes.footnotes.isEmpty {
+            xml += """
+                <Override PartName="/word/footnotes.xml" ContentType="\(FootnotesCollection.contentType)"/>
+            """
+        }
+
+        // 尾註
+        if !document.endnotes.endnotes.isEmpty {
+            xml += """
+                <Override PartName="/word/endnotes.xml" ContentType="\(EndnotesCollection.contentType)"/>
+            """
+        }
+
+        xml += "</Types>"
 
         let url = baseURL.appendingPathComponent("[Content_Types].xml")
         try xml.write(to: url, atomically: true, encoding: .utf8)
@@ -87,15 +183,86 @@ struct DocxWriter {
         try xml.write(to: url, atomically: true, encoding: .utf8)
     }
 
-    private static func writeDocumentRelationships(to baseURL: URL) throws {
-        let xml = """
+    private static func writeDocumentRelationships(to baseURL: URL, document: WordDocument) throws {
+        let hasNumbering = !document.numbering.abstractNums.isEmpty
+
+        var xml = """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
             <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
             <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>
             <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable" Target="fontTable.xml"/>
-        </Relationships>
         """
+
+        if hasNumbering {
+            xml += """
+                <Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/>
+            """
+        }
+
+        // 頁首關係
+        for header in document.headers {
+            xml += """
+                <Relationship Id="\(header.id)" Type="\(Header.relationshipType)" Target="\(header.fileName)"/>
+            """
+        }
+
+        // 頁尾關係
+        for footer in document.footers {
+            xml += """
+                <Relationship Id="\(footer.id)" Type="\(Footer.relationshipType)" Target="\(footer.fileName)"/>
+            """
+        }
+
+        // 圖片關係
+        for image in document.images {
+            xml += """
+                <Relationship Id="\(image.id)" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/\(image.fileName)"/>
+            """
+        }
+
+        // 超連結關係（外部連結）
+        for hyperlinkRef in document.hyperlinkReferences {
+            xml += """
+                <Relationship Id="\(hyperlinkRef.relationshipId)" Type="\(Hyperlink.relationshipType)" Target="\(escapeXML(hyperlinkRef.url))" TargetMode="External"/>
+            """
+        }
+
+        // 註解關係
+        if !document.comments.comments.isEmpty {
+            // 計算下一個可用的 rId
+            let baseId = document.numbering.abstractNums.isEmpty ? 4 : 5
+            let usedCount = document.headers.count + document.footers.count + document.images.count + document.hyperlinkReferences.count
+            let commentsRId = "rId\(baseId + usedCount)"
+            xml += """
+                <Relationship Id="\(commentsRId)" Type="\(CommentsCollection.relationshipType)" Target="comments.xml"/>
+            """
+        }
+
+        // 腳註關係
+        if !document.footnotes.footnotes.isEmpty {
+            let baseId = document.numbering.abstractNums.isEmpty ? 4 : 5
+            var usedCount = document.headers.count + document.footers.count + document.images.count + document.hyperlinkReferences.count
+            if !document.comments.comments.isEmpty { usedCount += 1 }
+            let footnotesRId = "rId\(baseId + usedCount)"
+            xml += """
+                <Relationship Id="\(footnotesRId)" Type="\(FootnotesCollection.relationshipType)" Target="footnotes.xml"/>
+            """
+        }
+
+        // 尾註關係
+        if !document.endnotes.endnotes.isEmpty {
+            let baseId = document.numbering.abstractNums.isEmpty ? 4 : 5
+            var usedCount = document.headers.count + document.footers.count + document.images.count + document.hyperlinkReferences.count
+            if !document.comments.comments.isEmpty { usedCount += 1 }
+            if !document.footnotes.footnotes.isEmpty { usedCount += 1 }
+            let endnotesRId = "rId\(baseId + usedCount)"
+            xml += """
+                <Relationship Id="\(endnotesRId)" Type="\(EndnotesCollection.relationshipType)" Target="endnotes.xml"/>
+            """
+        }
+
+        xml += "</Relationships>"
 
         let url = baseURL.appendingPathComponent("word/_rels/document.xml.rels")
         try xml.write(to: url, atomically: true, encoding: .utf8)
@@ -121,15 +288,8 @@ struct DocxWriter {
             }
         }
 
-        // 分節屬性（頁面設定）
-        xml += """
-        <w:sectPr>
-            <w:pgSz w:w="12240" w:h="15840"/>
-            <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>
-            <w:cols w:space="720"/>
-            <w:docGrid w:linePitch="360"/>
-        </w:sectPr>
-        """
+        // 分節屬性（頁面設定）- 使用文件的 sectionProperties
+        xml += document.sectionProperties.toXML()
 
         xml += "</w:body></w:document>"
 
@@ -143,6 +303,47 @@ struct DocxWriter {
         let xml = styles.toStylesXML()
         let url = baseURL.appendingPathComponent("word/styles.xml")
         try xml.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    // MARK: - Numbering
+
+    private static func writeNumbering(_ numbering: Numbering, to baseURL: URL) throws {
+        let xml = numbering.toXML()
+        let url = baseURL.appendingPathComponent("word/numbering.xml")
+        try xml.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    // MARK: - Header
+
+    private static func writeHeader(_ header: Header, to baseURL: URL) throws {
+        let xml = header.toXML()
+        let url = baseURL.appendingPathComponent("word/\(header.fileName)")
+        try xml.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    // MARK: - Footer
+
+    private static func writeFooter(_ footer: Footer, to baseURL: URL) throws {
+        // 如果頁尾段落為空，使用預設的頁碼格式
+        let xml: String
+        if footer.paragraphs.isEmpty || (footer.paragraphs.count == 1 && footer.paragraphs[0].runs.isEmpty) {
+            // 預設使用簡單頁碼格式
+            xml = footer.toXMLWithPageNumber(format: .simple)
+        } else {
+            xml = footer.toXML()
+        }
+
+        let url = baseURL.appendingPathComponent("word/\(footer.fileName)")
+        try xml.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    // MARK: - Images
+
+    private static func writeImages(_ images: [ImageReference], to baseURL: URL) throws {
+        for image in images {
+            let url = baseURL.appendingPathComponent("word/media/\(image.fileName)")
+            try image.data.write(to: url)
+        }
     }
 
     // MARK: - Settings
@@ -257,6 +458,30 @@ struct DocxWriter {
         """
 
         let url = baseURL.appendingPathComponent("docProps/app.xml")
+        try xml.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    // MARK: - Comments
+
+    private static func writeComments(_ comments: CommentsCollection, to baseURL: URL) throws {
+        let xml = comments.toXML()
+        let url = baseURL.appendingPathComponent("word/comments.xml")
+        try xml.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    // MARK: - Footnotes
+
+    private static func writeFootnotes(_ footnotes: FootnotesCollection, to baseURL: URL) throws {
+        let xml = footnotes.toXML()
+        let url = baseURL.appendingPathComponent("word/footnotes.xml")
+        try xml.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    // MARK: - Endnotes
+
+    private static func writeEndnotes(_ endnotes: EndnotesCollection, to baseURL: URL) throws {
+        let xml = endnotes.toXML()
+        let url = baseURL.appendingPathComponent("word/endnotes.xml")
         try xml.write(to: url, atomically: true, encoding: .utf8)
     }
 

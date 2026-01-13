@@ -202,6 +202,23 @@ struct CellShading {
     static func solid(_ color: String) -> CellShading {
         CellShading(fill: color, pattern: .clear)
     }
+
+    /// 產生 XML 字串（供段落屬性使用）
+    func toXML() -> String {
+        var attrs = ["w:fill=\"\(fill)\""]
+
+        if let pattern = pattern {
+            attrs.insert("w:val=\"\(pattern.rawValue)\"", at: 0)
+        } else {
+            attrs.insert("w:val=\"clear\"", at: 0)
+        }
+
+        if let color = color {
+            attrs.append("w:color=\"\(color)\"")
+        }
+
+        return "<w:shd \(attrs.joined(separator: " "))/>"
+    }
 }
 
 /// 底色圖案

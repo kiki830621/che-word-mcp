@@ -23,6 +23,7 @@ enum WordError: Error, LocalizedError {
     // MCP 錯誤
     case unknownTool(String)
     case missingParameter(String)
+    case invalidParameter(String, String)  // (參數名, 原因)
 
     // 其他
     case unknownError(String)
@@ -53,6 +54,8 @@ enum WordError: Error, LocalizedError {
             return "Unknown tool: \(name)"
         case .missingParameter(let param):
             return "Missing required parameter: \(param)"
+        case .invalidParameter(let param, let reason):
+            return "Invalid parameter '\(param)': \(reason)"
         case .unknownError(let message):
             return "Unknown error: \(message)"
         }

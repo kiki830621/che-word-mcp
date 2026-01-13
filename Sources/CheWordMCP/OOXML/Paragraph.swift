@@ -4,6 +4,12 @@ import Foundation
 struct Paragraph {
     var runs: [Run]
     var properties: ParagraphProperties
+    var hasPageBreak: Bool = false      // 是否為分頁符段落
+    var bookmarks: [Bookmark] = []      // 段落內的書籤
+    var hyperlinks: [Hyperlink] = []    // 段落內的超連結
+    var commentIds: [Int] = []          // 段落關聯的註解 ID
+    var footnoteIds: [Int] = []         // 段落內的腳註 ID
+    var endnoteIds: [Int] = []          // 段落內的尾註 ID
 
     init(runs: [Run] = [], properties: ParagraphProperties = ParagraphProperties()) {
         self.runs = runs
@@ -18,7 +24,12 @@ struct Paragraph {
 
     /// 取得段落純文字
     func getText() -> String {
-        return runs.map { $0.text }.joined()
+        var text = runs.map { $0.text }.joined()
+        // 加入超連結文字
+        for hyperlink in hyperlinks {
+            text += hyperlink.text
+        }
+        return text
     }
 }
 
@@ -34,6 +45,9 @@ struct ParagraphProperties {
     var keepNext: Bool = false          // 與下段同頁
     var keepLines: Bool = false         // 段落不分頁
     var pageBreakBefore: Bool = false   // 段落前分頁
+    var sectionBreak: SectionBreakType? // 分節符類型
+    var border: ParagraphBorder?        // 段落邊框
+    var shading: ParagraphShading?      // 段落底色
 
     init() {}
 
@@ -47,6 +61,9 @@ struct ParagraphProperties {
         if other.keepNext { self.keepNext = true }
         if other.keepLines { self.keepLines = true }
         if other.pageBreakBefore { self.pageBreakBefore = true }
+        if let sectionBreak = other.sectionBreak { self.sectionBreak = sectionBreak }
+        if let border = other.border { self.border = border }
+        if let shading = other.shading { self.shading = shading }
     }
 }
 
@@ -60,6 +77,9 @@ enum Alignment: String, Codable {
     case both = "both"      // 左右對齊（兩端對齊）
     case distribute = "distribute"  // 分散對齊
 }
+
+/// 段落對齊（Alignment 的別名）
+typealias ParagraphAlignment = Alignment
 
 /// 段落間距
 struct Spacing {
@@ -149,13 +169,61 @@ extension Paragraph {
 
         // Paragraph Properties
         let propsXML = properties.toXML()
-        if !propsXML.isEmpty {
-            xml += "<w:pPr>\(propsXML)</w:pPr>"
+        if !propsXML.isEmpty || properties.sectionBreak != nil {
+            xml += "<w:pPr>\(propsXML)"
+
+            // 分節符放在段落屬性中
+            if let sectionBreak = properties.sectionBreak {
+                xml += "<w:sectPr><w:type w:val=\"\(sectionBreak.rawValue)\"/></w:sectPr>"
+            }
+
+            xml += "</w:pPr>"
+        }
+
+        // 分頁符
+        if hasPageBreak {
+            xml += "<w:r><w:br w:type=\"page\"/></w:r>"
+        }
+
+        // 書籤開始標記
+        for bookmark in bookmarks {
+            xml += bookmark.toBookmarkStartXML()
+        }
+
+        // 註解範圍開始標記
+        for commentId in commentIds {
+            xml += "<w:commentRangeStart w:id=\"\(commentId)\"/>"
         }
 
         // Runs
         for run in runs {
             xml += run.toXML()
+        }
+
+        // 超連結
+        for hyperlink in hyperlinks {
+            xml += hyperlink.toXML()
+        }
+
+        // 註解範圍結束標記和參照
+        for commentId in commentIds {
+            xml += "<w:commentRangeEnd w:id=\"\(commentId)\"/>"
+            xml += "<w:r><w:commentReference w:id=\"\(commentId)\"/></w:r>"
+        }
+
+        // 腳註參照
+        for footnoteId in footnoteIds {
+            xml += "<w:r><w:rPr><w:rStyle w:val=\"FootnoteReference\"/></w:rPr><w:footnoteReference w:id=\"\(footnoteId)\"/></w:r>"
+        }
+
+        // 尾註參照
+        for endnoteId in endnoteIds {
+            xml += "<w:r><w:rPr><w:rStyle w:val=\"EndnoteReference\"/></w:rPr><w:endnoteReference w:id=\"\(endnoteId)\"/></w:r>"
+        }
+
+        // 書籤結束標記
+        for bookmark in bookmarks {
+            xml += bookmark.toBookmarkEndXML()
         }
 
         xml += "</w:p>"
@@ -235,6 +303,16 @@ extension ParagraphProperties {
         }
         if pageBreakBefore {
             parts.append("<w:pageBreakBefore/>")
+        }
+
+        // 段落邊框
+        if let border = border {
+            parts.append(border.toXML())
+        }
+
+        // 段落底色
+        if let shading = shading {
+            parts.append(shading.toXML())
         }
 
         return parts.joined()

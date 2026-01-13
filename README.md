@@ -9,7 +9,8 @@ A Swift-native MCP (Model Context Protocol) server for Microsoft Word document (
 - **Pure Swift Implementation**: No Node.js, Python, or external runtime required
 - **Direct OOXML Manipulation**: Works directly with XML, no Microsoft Word installation needed
 - **Single Binary**: Just one executable file
-- **18 MCP Tools**: Comprehensive document manipulation capabilities
+- **72 MCP Tools**: Comprehensive document manipulation capabilities
+- **Complete OOXML Support**: Full support for tables, styles, images, headers/footers, comments, footnotes, and more
 - **Cross-platform**: Works on macOS (and potentially other platforms supporting Swift)
 
 ## Installation
@@ -49,7 +50,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-## Available Tools
+## Available Tools (72 Total)
 
 ### Document Management (6 tools)
 
@@ -60,16 +61,16 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 | `save_document` | Save document to .docx file |
 | `close_document` | Close an open document |
 | `list_open_documents` | List all open documents |
-| `get_document_info` | Get document statistics (paragraphs, words, characters) |
+| `get_document_info` | Get document statistics |
 
 ### Content Operations (6 tools)
 
 | Tool | Description |
 |------|-------------|
 | `get_text` | Get plain text content |
-| `get_paragraphs` | Get all paragraphs with formatting info |
+| `get_paragraphs` | Get all paragraphs with formatting |
 | `insert_paragraph` | Insert a new paragraph |
-| `update_paragraph` | Update existing paragraph content |
+| `update_paragraph` | Update paragraph content |
 | `delete_paragraph` | Delete a paragraph |
 | `replace_text` | Search and replace text |
 
@@ -79,20 +80,119 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 |------|-------------|
 | `format_text` | Apply text formatting (bold, italic, color, font) |
 | `set_paragraph_format` | Set paragraph formatting (alignment, spacing) |
-| `apply_style` | Apply built-in styles (Heading1, Title, etc.) |
+| `apply_style` | Apply built-in or custom styles |
 
-### Tables (1 tool)
+### Tables (6 tools)
 
 | Tool | Description |
 |------|-------------|
 | `insert_table` | Insert a table with optional data |
+| `get_tables` | Get all tables information |
+| `update_cell` | Update cell content |
+| `delete_table` | Delete a table |
+| `merge_cells` | Merge cells horizontally or vertically |
+| `set_table_style` | Set table borders and shading |
+
+### Style Management (4 tools)
+
+| Tool | Description |
+|------|-------------|
+| `list_styles` | List all available styles |
+| `create_style` | Create custom style |
+| `update_style` | Update style definition |
+| `delete_style` | Delete custom style |
+
+### Lists (3 tools)
+
+| Tool | Description |
+|------|-------------|
+| `insert_bullet_list` | Insert bullet list |
+| `insert_numbered_list` | Insert numbered list |
+| `set_list_level` | Set list indentation level |
+
+### Page Setup (5 tools)
+
+| Tool | Description |
+|------|-------------|
+| `set_page_size` | Set page size (A4, Letter, etc.) |
+| `set_page_margins` | Set page margins |
+| `set_page_orientation` | Set portrait or landscape |
+| `insert_page_break` | Insert page break |
+| `insert_section_break` | Insert section break |
+
+### Headers & Footers (5 tools)
+
+| Tool | Description |
+|------|-------------|
+| `add_header` | Add header content |
+| `update_header` | Update header content |
+| `add_footer` | Add footer content |
+| `update_footer` | Update footer content |
+| `insert_page_number` | Insert page number field |
+
+### Images (5 tools)
+
+| Tool | Description |
+|------|-------------|
+| `insert_image` | Insert image (PNG, JPEG) |
+| `update_image` | Update image properties |
+| `delete_image` | Delete image |
+| `list_images` | List all images |
+| `set_image_style` | Set image border and effects |
 
 ### Export (2 tools)
 
 | Tool | Description |
 |------|-------------|
-| `export_text` | Export document as plain text |
-| `export_markdown` | Export document as Markdown |
+| `export_text` | Export as plain text |
+| `export_markdown` | Export as Markdown |
+
+### Hyperlinks & Bookmarks (6 tools)
+
+| Tool | Description |
+|------|-------------|
+| `insert_hyperlink` | Insert external hyperlink |
+| `insert_internal_link` | Insert link to bookmark |
+| `update_hyperlink` | Update hyperlink |
+| `delete_hyperlink` | Delete hyperlink |
+| `insert_bookmark` | Insert bookmark |
+| `delete_bookmark` | Delete bookmark |
+
+### Comments & Revisions (8 tools)
+
+| Tool | Description |
+|------|-------------|
+| `insert_comment` | Insert comment |
+| `update_comment` | Update comment text |
+| `delete_comment` | Delete comment |
+| `list_comments` | List all comments |
+| `enable_track_changes` | Enable track changes |
+| `disable_track_changes` | Disable track changes |
+| `accept_revision` | Accept revision |
+| `reject_revision` | Reject revision |
+
+### Footnotes & Endnotes (4 tools)
+
+| Tool | Description |
+|------|-------------|
+| `insert_footnote` | Insert footnote |
+| `delete_footnote` | Delete footnote |
+| `insert_endnote` | Insert endnote |
+| `delete_endnote` | Delete endnote |
+
+### Advanced Features (9 tools)
+
+| Tool | Description |
+|------|-------------|
+| `insert_toc` | Insert table of contents |
+| `insert_text_field` | Insert form text field |
+| `insert_checkbox` | Insert form checkbox |
+| `insert_dropdown` | Insert form dropdown |
+| `insert_equation` | Insert math equation |
+| `set_paragraph_border` | Set paragraph border |
+| `set_paragraph_shading` | Set paragraph background color |
+| `set_character_spacing` | Set character spacing |
+| `set_text_effect` | Set text animation effect |
 
 ## Usage Examples
 
@@ -106,28 +206,35 @@ Create a new Word document called "report" with:
 Save it to ~/Documents/report.docx
 ```
 
-### Open and Modify Existing Document
+### Create a Document with Table and Images
 
 ```
-Open the document at ~/Documents/proposal.docx
-Replace all occurrences of "2024" with "2025"
-Save the changes
+Create a document with:
+- A title "Product Catalog"
+- Insert an image from ~/images/logo.png
+- A 4x3 table with product information
+- Apply borders to the table
+Save it to ~/Documents/catalog.docx
 ```
 
-### Create a Document with Table
+### Create a Professional Report
 
 ```
-Create a document with a 3x4 table containing:
-- Header row: Name, Age, Department
-- Data rows with employee information
-Export it as Markdown too
+Create a document with:
+- Custom page margins (1 inch all around)
+- A header with company name
+- A footer with page numbers
+- Table of contents
+- Multiple sections with headings
+- Footnotes for references
+Save it as ~/Documents/annual_report.docx
 ```
 
 ## Technical Details
 
 ### OOXML Structure
 
-The server generates valid Office Open XML documents with the following structure:
+The server generates valid Office Open XML documents with complete structure:
 
 ```
 document.docx (ZIP)
@@ -139,10 +246,18 @@ document.docx (ZIP)
 │   ├── styles.xml        # Style definitions
 │   ├── settings.xml      # Document settings
 │   ├── fontTable.xml     # Font definitions
+│   ├── numbering.xml     # List definitions
+│   ├── comments.xml      # Comments
+│   ├── footnotes.xml     # Footnotes
+│   ├── endnotes.xml      # Endnotes
+│   ├── header1.xml       # Header content
+│   ├── footer1.xml       # Footer content
+│   ├── media/            # Embedded images
+│   │   └── image*.{png,jpeg}
 │   └── _rels/
 │       └── document.xml.rels
 └── docProps/
-    ├── core.xml          # Metadata (author, title)
+    ├── core.xml          # Metadata
     └── app.xml           # Application info
 ```
 
@@ -160,15 +275,12 @@ document.docx (ZIP)
 | Requires Word | Yes | No | No | **No** |
 | Runtime | Node.js | Python | Node.js | **None** |
 | Single Binary | No | No | No | **Yes** |
-
-## Roadmap
-
-- [ ] Image support
-- [ ] Header/Footer support
-- [ ] Page breaks and sections
-- [ ] Numbered/Bulleted lists
-- [ ] Comments and track changes
-- [ ] Read existing document styles
+| Tools Count | ~10 | N/A | N/A | **72** |
+| Images | Limited | Yes | Yes | **Yes** |
+| Comments | No | Limited | Limited | **Yes** |
+| Track Changes | No | No | No | **Yes** |
+| TOC | No | Limited | No | **Yes** |
+| Form Fields | No | No | No | **Yes** |
 
 ## License
 
