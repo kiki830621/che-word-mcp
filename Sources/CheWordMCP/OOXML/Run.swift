@@ -6,11 +6,13 @@ struct Run {
     var text: String
     var properties: RunProperties
     var drawing: Drawing?  // 圖片繪圖元素
+    var rawXML: String?    // 原始 XML（用於欄位代碼、SDT 等進階功能）
 
     init(text: String, properties: RunProperties = RunProperties()) {
         self.text = text
         self.properties = properties
         self.drawing = nil
+        self.rawXML = nil
     }
 }
 
@@ -115,7 +117,12 @@ enum VerticalAlign: String, Codable {
 extension Run {
     /// 轉換為 OOXML XML 字串
     func toXML() -> String {
-        // 如果有原始 XML，直接輸出（用於 SDT, TOC, 數學公式等）
+        // 如果 Run 本身有原始 XML，直接輸出（用於欄位代碼、SDT 等）
+        if let rawXML = self.rawXML {
+            return rawXML
+        }
+
+        // 如果 RunProperties 有原始 XML，也直接輸出
         if let rawXML = properties.rawXML {
             return rawXML
         }

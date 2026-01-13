@@ -9,7 +9,7 @@
 - **純 Swift 實作**：不需要 Node.js、Python 或其他執行環境
 - **直接操作 OOXML**：直接處理 XML，不需要安裝 Microsoft Word
 - **單一執行檔**：只有一個 binary 檔案
-- **72 個 MCP 工具**：完整的文件操作功能
+- **83 個 MCP 工具**：完整的文件操作功能
 - **完整 OOXML 支援**：完整支援表格、樣式、圖片、頁首/頁尾、註解、腳註等
 - **跨平台**：支援 macOS（以及其他支援 Swift 的平台）
 
@@ -50,7 +50,7 @@ claude mcp add che-word-mcp /path/to/che-word-mcp/.build/release/CheWordMCP
 }
 ```
 
-## 可用工具（共 72 個）
+## 可用工具（共 83 個）
 
 ### 文件管理 (6 個)
 
@@ -130,11 +130,12 @@ claude mcp add che-word-mcp /path/to/che-word-mcp/.build/release/CheWordMCP
 | `update_footer` | 更新頁尾內容 |
 | `insert_page_number` | 插入頁碼欄位 |
 
-### 圖片 (5 個)
+### 圖片 (6 個)
 
 | 工具 | 說明 |
 |------|------|
-| `insert_image` | 插入圖片（PNG、JPEG）|
+| `insert_image` | 插入內嵌圖片（PNG、JPEG）|
+| `insert_floating_image` | 插入浮動圖片（文繞圖）|
 | `update_image` | 更新圖片屬性 |
 | `delete_image` | 刪除圖片 |
 | `list_images` | 列出所有圖片 |
@@ -158,7 +159,7 @@ claude mcp add che-word-mcp /path/to/che-word-mcp/.build/release/CheWordMCP
 | `insert_bookmark` | 插入書籤 |
 | `delete_bookmark` | 刪除書籤 |
 
-### 註解與修訂 (8 個)
+### 註解與修訂 (10 個)
 
 | 工具 | 說明 |
 |------|------|
@@ -166,6 +167,8 @@ claude mcp add che-word-mcp /path/to/che-word-mcp/.build/release/CheWordMCP
 | `update_comment` | 更新註解文字 |
 | `delete_comment` | 刪除註解 |
 | `list_comments` | 列出所有註解 |
+| `reply_to_comment` | 回覆現有註解 |
+| `resolve_comment` | 標記註解為已解決 |
 | `enable_track_changes` | 啟用追蹤修訂 |
 | `disable_track_changes` | 停用追蹤修訂 |
 | `accept_revision` | 接受修訂 |
@@ -179,6 +182,24 @@ claude mcp add che-word-mcp /path/to/che-word-mcp/.build/release/CheWordMCP
 | `delete_footnote` | 刪除腳註 |
 | `insert_endnote` | 插入尾註 |
 | `delete_endnote` | 刪除尾註 |
+
+### 欄位代碼 (7 個)
+
+| 工具 | 說明 |
+|------|------|
+| `insert_if_field` | 插入 IF 條件欄位 |
+| `insert_calculation_field` | 插入計算欄位（SUM、AVERAGE 等）|
+| `insert_date_field` | 插入日期時間欄位 |
+| `insert_page_field` | 插入頁碼欄位 |
+| `insert_merge_field` | 插入合併列印欄位 |
+| `insert_sequence_field` | 插入自動編號序列 |
+| `insert_content_control` | 插入 SDT 內容控制項 |
+
+### 重複區段 (1 個)
+
+| 工具 | 說明 |
+|------|------|
+| `insert_repeating_section` | 插入重複區段（Word 2012+）|
 
 ### 進階功能 (9 個)
 
@@ -275,7 +296,7 @@ document.docx (ZIP)
 | 需要 Word | 是 | 否 | 否 | **否** |
 | 執行環境 | Node.js | Python | Node.js | **無** |
 | 單一執行檔 | 否 | 否 | 否 | **是** |
-| 工具數量 | ~10 | N/A | N/A | **72** |
+| 工具數量 | ~10 | N/A | N/A | **83** |
 | 圖片支援 | 有限 | 是 | 是 | **是** |
 | 註解 | 否 | 有限 | 有限 | **是** |
 | 追蹤修訂 | 否 | 否 | 否 | **是** |

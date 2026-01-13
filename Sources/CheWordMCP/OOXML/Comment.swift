@@ -11,6 +11,11 @@ struct Comment {
     var initials: String?       // 作者縮寫（用於顯示）
     var paragraphIndex: Int     // 註解附加的段落索引
 
+    // 回覆支援（Word 2012+ / commentsExtended.xml）
+    var paraId: String?         // 段落 ID（用於連結回覆）
+    var parentId: Int?          // 父註解 ID（如果是回覆）
+    var done: Bool = false      // 是否已解決
+
     init(id: Int, author: String, text: String, paragraphIndex: Int, date: Date = Date(), initials: String? = nil) {
         self.id = id
         self.author = author
@@ -18,6 +23,29 @@ struct Comment {
         self.paragraphIndex = paragraphIndex
         self.date = date
         self.initials = initials ?? String(author.prefix(2).uppercased())
+        self.paraId = Comment.generateParaId()
+    }
+
+    /// 建立回覆註解
+    init(id: Int, author: String, text: String, parentId: Int, date: Date = Date(), initials: String? = nil) {
+        self.id = id
+        self.author = author
+        self.text = text
+        self.paragraphIndex = -1  // 回覆不直接附加到段落
+        self.parentId = parentId
+        self.date = date
+        self.initials = initials ?? String(author.prefix(2).uppercased())
+        self.paraId = Comment.generateParaId()
+    }
+
+    /// 產生隨機 8 位十六進位段落 ID
+    private static func generateParaId() -> String {
+        return String(format: "%08X", UInt32.random(in: 0...UInt32.max))
+    }
+
+    /// 是否為回覆
+    var isReply: Bool {
+        return parentId != nil
     }
 }
 
@@ -29,9 +57,15 @@ extension Comment {
         let dateFormatter = ISO8601DateFormatter()
         let dateString = dateFormatter.string(from: date)
 
+        // 段落屬性（包含 paraId）
+        var pPrAttrs = ""
+        if let paraId = paraId {
+            pPrAttrs = " w14:paraId=\"\(paraId)\" w14:textId=\"\(String(format: "%08X", UInt32.random(in: 0...UInt32.max)))\""
+        }
+
         return """
         <w:comment w:id="\(id)" w:author="\(escapeXML(author))" w:date="\(dateString)" w:initials="\(escapeXML(initials ?? ""))">
-            <w:p>
+            <w:p\(pPrAttrs)>
                 <w:r>
                     <w:t xml:space="preserve">\(escapeXML(text))</w:t>
                 </w:r>
@@ -77,11 +111,45 @@ struct CommentsCollection {
         return maxId + 1
     }
 
+    /// 新增註解
+    mutating func addComment(_ comment: Comment) {
+        comments.append(comment)
+    }
+
+    /// 新增回覆
+    mutating func addReply(to parentId: Int, author: String, text: String) -> Comment? {
+        guard comments.contains(where: { $0.id == parentId }) else {
+            return nil
+        }
+        let newId = nextCommentId()
+        let reply = Comment(id: newId, author: author, text: text, parentId: parentId)
+        comments.append(reply)
+        return reply
+    }
+
+    /// 取得某註解的所有回覆
+    func getReplies(for commentId: Int) -> [Comment] {
+        return comments.filter { $0.parentId == commentId }
+    }
+
+    /// 取得頂層註解（非回覆）
+    func getTopLevelComments() -> [Comment] {
+        return comments.filter { !$0.isReply }
+    }
+
+    /// 標記註解為已解決
+    mutating func markAsDone(_ commentId: Int, done: Bool = true) {
+        if let index = comments.firstIndex(where: { $0.id == commentId }) {
+            comments[index].done = done
+        }
+    }
+
     /// 產生完整的 comments.xml 內容
     func toXML() -> String {
         var xml = """
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <w:comments xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+                    xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
                     xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
         """
 
@@ -93,111 +161,57 @@ struct CommentsCollection {
         return xml
     }
 
+    /// 產生 commentsExtended.xml 內容（Word 2012+ 回覆支援）
+    func toExtendedXML() -> String? {
+        // 只有當有回覆或已解決狀態時才需要 commentsExtended.xml
+        let hasExtendedInfo = comments.contains { $0.isReply || $0.done }
+        guard hasExtendedInfo else { return nil }
+
+        var xml = """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <w15:commentsEx xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml"
+                        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                        mc:Ignorable="w15">
+        """
+
+        for comment in comments {
+            var attrs: [String] = ["w15:paraId=\"\(comment.paraId ?? "00000000")\""]
+
+            // 如果是回覆，找到父註解的 paraId
+            if let parentId = comment.parentId,
+               let parentComment = comments.first(where: { $0.id == parentId }),
+               let parentParaId = parentComment.paraId {
+                attrs.append("w15:paraIdParent=\"\(parentParaId)\"")
+            }
+
+            // 如果已解決
+            if comment.done {
+                attrs.append("w15:done=\"1\"")
+            }
+
+            xml += "<w15:commentEx \(attrs.joined(separator: " "))/>"
+        }
+
+        xml += "</w15:commentsEx>"
+        return xml
+    }
+
+    /// 是否有需要 commentsExtended.xml
+    var hasExtendedComments: Bool {
+        return comments.contains { $0.isReply || $0.done }
+    }
+
     /// Content Type for comments.xml
     static let contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml"
 
+    /// Content Type for commentsExtended.xml
+    static let extendedContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.commentsExtended+xml"
+
     /// Relationship type for comments
     static let relationshipType = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments"
-}
 
-// MARK: - Track Changes (Revision)
-
-/// 修訂設定
-struct TrackChangesSettings {
-    var enabled: Bool = false           // 是否啟用修訂追蹤
-    var author: String = "Unknown"      // 修訂作者
-    var dateTime: Date = Date()         // 修訂時間
-
-    init(enabled: Bool = false, author: String = "Unknown") {
-        self.enabled = enabled
-        self.author = author
-        self.dateTime = Date()
-    }
-}
-
-/// 修訂類型
-enum RevisionType: String {
-    case insertion = "ins"      // 插入
-    case deletion = "del"       // 刪除
-    case formatting = "rPrChange"   // 格式變更
-    case paragraphChange = "pPrChange"  // 段落屬性變更
-}
-
-/// 單一修訂記錄
-struct Revision {
-    var id: Int                     // 修訂 ID
-    var type: RevisionType          // 修訂類型
-    var author: String              // 作者
-    var date: Date                  // 修訂日期
-    var paragraphIndex: Int         // 段落索引
-    var originalText: String?       // 原始文字（刪除時）
-    var newText: String?            // 新文字（插入時）
-
-    init(id: Int, type: RevisionType, author: String, paragraphIndex: Int,
-         originalText: String? = nil, newText: String? = nil, date: Date = Date()) {
-        self.id = id
-        self.type = type
-        self.author = author
-        self.paragraphIndex = paragraphIndex
-        self.originalText = originalText
-        self.newText = newText
-        self.date = date
-    }
-}
-
-// MARK: - Revision XML Generation
-
-extension Revision {
-    /// 產生插入標記的 XML
-    func toInsertionXML(text: String) -> String {
-        let dateFormatter = ISO8601DateFormatter()
-        let dateString = dateFormatter.string(from: date)
-
-        return """
-        <w:ins w:id="\(id)" w:author="\(escapeXML(author))" w:date="\(dateString)">
-            <w:r>
-                <w:t xml:space="preserve">\(escapeXML(text))</w:t>
-            </w:r>
-        </w:ins>
-        """
-    }
-
-    /// 產生刪除標記的 XML
-    func toDeletionXML(text: String) -> String {
-        let dateFormatter = ISO8601DateFormatter()
-        let dateString = dateFormatter.string(from: date)
-
-        return """
-        <w:del w:id="\(id)" w:author="\(escapeXML(author))" w:date="\(dateString)">
-            <w:r>
-                <w:delText xml:space="preserve">\(escapeXML(text))</w:delText>
-            </w:r>
-        </w:del>
-        """
-    }
-
-    private func escapeXML(_ string: String) -> String {
-        return string
-            .replacingOccurrences(of: "&", with: "&amp;")
-            .replacingOccurrences(of: "<", with: "&lt;")
-            .replacingOccurrences(of: ">", with: "&gt;")
-            .replacingOccurrences(of: "\"", with: "&quot;")
-            .replacingOccurrences(of: "'", with: "&apos;")
-    }
-}
-
-// MARK: - Revisions Collection
-
-/// 修訂集合
-struct RevisionsCollection {
-    var revisions: [Revision] = []
-    var settings: TrackChangesSettings = TrackChangesSettings()
-
-    /// 取得下一個修訂 ID
-    mutating func nextRevisionId() -> Int {
-        let maxId = revisions.map { $0.id }.max() ?? 0
-        return maxId + 1
-    }
+    /// Relationship type for commentsExtended
+    static let extendedRelationshipType = "http://schemas.microsoft.com/office/2011/relationships/commentsExtended"
 }
 
 // MARK: - Comment Error
@@ -205,6 +219,8 @@ struct RevisionsCollection {
 enum CommentError: Error, LocalizedError {
     case notFound(Int)
     case invalidParagraphIndex(Int)
+    case parentCommentNotFound(Int)
+    case cannotReplyToReply  // 視實作需求可移除此限制
 
     var errorDescription: String? {
         switch self {
@@ -212,28 +228,11 @@ enum CommentError: Error, LocalizedError {
             return "Comment with id \(id) not found"
         case .invalidParagraphIndex(let index):
             return "Invalid paragraph index: \(index)"
+        case .parentCommentNotFound(let id):
+            return "Parent comment with id \(id) not found"
+        case .cannotReplyToReply:
+            return "Cannot reply to a reply (nested replies not supported)"
         }
     }
 }
 
-// MARK: - Revision Error
-
-enum RevisionError: Error, LocalizedError {
-    case notFound(Int)
-    case trackChangesDisabled
-    case cannotAccept(String)
-    case cannotReject(String)
-
-    var errorDescription: String? {
-        switch self {
-        case .notFound(let id):
-            return "Revision with id \(id) not found"
-        case .trackChangesDisabled:
-            return "Track changes is not enabled"
-        case .cannotAccept(let reason):
-            return "Cannot accept revision: \(reason)"
-        case .cannotReject(let reason):
-            return "Cannot reject revision: \(reason)"
-        }
-    }
-}

@@ -27,15 +27,16 @@ struct Numbering {
         let abstractNum = AbstractNum(
             abstractNumId: abstractNumId,
             levels: [
-                Level(ilvl: 0, start: 1, numFmt: .bullet, lvlText: "\u{2022}", indent: 720),  // •
-                Level(ilvl: 1, start: 1, numFmt: .bullet, lvlText: "o", indent: 1440),
-                Level(ilvl: 2, start: 1, numFmt: .bullet, lvlText: "\u{25AA}", indent: 2160), // ▪
-                Level(ilvl: 3, start: 1, numFmt: .bullet, lvlText: "\u{2022}", indent: 2880),
-                Level(ilvl: 4, start: 1, numFmt: .bullet, lvlText: "o", indent: 3600),
-                Level(ilvl: 5, start: 1, numFmt: .bullet, lvlText: "\u{25AA}", indent: 4320),
-                Level(ilvl: 6, start: 1, numFmt: .bullet, lvlText: "\u{2022}", indent: 5040),
-                Level(ilvl: 7, start: 1, numFmt: .bullet, lvlText: "o", indent: 5760),
-                Level(ilvl: 8, start: 1, numFmt: .bullet, lvlText: "\u{25AA}", indent: 6480)
+                // Word 標準項目符號：Symbol 字體使用私有區字符
+                Level(ilvl: 0, start: 1, numFmt: .bullet, lvlText: "\u{F0B7}", indent: 720, fontName: "Symbol"),  // ● 實心圓
+                Level(ilvl: 1, start: 1, numFmt: .bullet, lvlText: "o", indent: 1440, fontName: "Courier New"),   // ○ 空心圓
+                Level(ilvl: 2, start: 1, numFmt: .bullet, lvlText: "\u{F0A7}", indent: 2160, fontName: "Wingdings"), // ■ 實心方
+                Level(ilvl: 3, start: 1, numFmt: .bullet, lvlText: "\u{F0B7}", indent: 2880, fontName: "Symbol"),
+                Level(ilvl: 4, start: 1, numFmt: .bullet, lvlText: "o", indent: 3600, fontName: "Courier New"),
+                Level(ilvl: 5, start: 1, numFmt: .bullet, lvlText: "\u{F0A7}", indent: 4320, fontName: "Wingdings"),
+                Level(ilvl: 6, start: 1, numFmt: .bullet, lvlText: "\u{F0B7}", indent: 5040, fontName: "Symbol"),
+                Level(ilvl: 7, start: 1, numFmt: .bullet, lvlText: "o", indent: 5760, fontName: "Courier New"),
+                Level(ilvl: 8, start: 1, numFmt: .bullet, lvlText: "\u{F0A7}", indent: 6480, fontName: "Wingdings")
             ]
         )
 

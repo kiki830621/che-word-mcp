@@ -9,7 +9,7 @@ A Swift-native MCP (Model Context Protocol) server for Microsoft Word document (
 - **Pure Swift Implementation**: No Node.js, Python, or external runtime required
 - **Direct OOXML Manipulation**: Works directly with XML, no Microsoft Word installation needed
 - **Single Binary**: Just one executable file
-- **72 MCP Tools**: Comprehensive document manipulation capabilities
+- **83 MCP Tools**: Comprehensive document manipulation capabilities
 - **Complete OOXML Support**: Full support for tables, styles, images, headers/footers, comments, footnotes, and more
 - **Cross-platform**: Works on macOS (and potentially other platforms supporting Swift)
 
@@ -50,7 +50,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-## Available Tools (72 Total)
+## Available Tools (83 Total)
 
 ### Document Management (6 tools)
 
@@ -130,11 +130,12 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 | `update_footer` | Update footer content |
 | `insert_page_number` | Insert page number field |
 
-### Images (5 tools)
+### Images (6 tools)
 
 | Tool | Description |
 |------|-------------|
-| `insert_image` | Insert image (PNG, JPEG) |
+| `insert_image` | Insert inline image (PNG, JPEG) |
+| `insert_floating_image` | Insert floating image with text wrap |
 | `update_image` | Update image properties |
 | `delete_image` | Delete image |
 | `list_images` | List all images |
@@ -158,7 +159,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 | `insert_bookmark` | Insert bookmark |
 | `delete_bookmark` | Delete bookmark |
 
-### Comments & Revisions (8 tools)
+### Comments & Revisions (10 tools)
 
 | Tool | Description |
 |------|-------------|
@@ -166,6 +167,8 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 | `update_comment` | Update comment text |
 | `delete_comment` | Delete comment |
 | `list_comments` | List all comments |
+| `reply_to_comment` | Reply to existing comment |
+| `resolve_comment` | Mark comment as resolved |
 | `enable_track_changes` | Enable track changes |
 | `disable_track_changes` | Disable track changes |
 | `accept_revision` | Accept revision |
@@ -179,6 +182,24 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 | `delete_footnote` | Delete footnote |
 | `insert_endnote` | Insert endnote |
 | `delete_endnote` | Delete endnote |
+
+### Field Codes (7 tools)
+
+| Tool | Description |
+|------|-------------|
+| `insert_if_field` | Insert IF conditional field |
+| `insert_calculation_field` | Insert calculation (SUM, AVERAGE, etc.) |
+| `insert_date_field` | Insert date/time field |
+| `insert_page_field` | Insert page number field |
+| `insert_merge_field` | Insert mail merge field |
+| `insert_sequence_field` | Insert auto-numbering sequence |
+| `insert_content_control` | Insert SDT content control |
+
+### Repeating Sections (1 tool)
+
+| Tool | Description |
+|------|-------------|
+| `insert_repeating_section` | Insert repeating section (Word 2012+) |
 
 ### Advanced Features (9 tools)
 
@@ -275,7 +296,7 @@ document.docx (ZIP)
 | Requires Word | Yes | No | No | **No** |
 | Runtime | Node.js | Python | Node.js | **None** |
 | Single Binary | No | No | No | **Yes** |
-| Tools Count | ~10 | N/A | N/A | **72** |
+| Tools Count | ~10 | N/A | N/A | **83** |
 | Images | Limited | Yes | Yes | **Yes** |
 | Comments | No | Limited | Limited | **Yes** |
 | Track Changes | No | No | No | **Yes** |

@@ -1769,6 +1769,354 @@ actor WordMCPServer {
                     ]),
                     "required": .array([.string("doc_id"), .string("paragraph_index"), .string("effect")])
                 ])
+            ),
+
+            // P8 新功能：註解回覆、浮動圖片、欄位代碼、重複區段
+
+            // 8.1 註解回覆
+            Tool(
+                name: "reply_to_comment",
+                description: "回覆現有的註解",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "parent_comment_id": .object([
+                            "type": .string("integer"),
+                            "description": .string("要回覆的註解 ID")
+                        ]),
+                        "text": .object([
+                            "type": .string("string"),
+                            "description": .string("回覆內容")
+                        ]),
+                        "author": .object([
+                            "type": .string("string"),
+                            "description": .string("回覆者名稱（預設 'Author'）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("parent_comment_id"), .string("text")])
+                ])
+            ),
+            Tool(
+                name: "resolve_comment",
+                description: "將註解標記為已解決或未解決",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "comment_id": .object([
+                            "type": .string("integer"),
+                            "description": .string("註解 ID")
+                        ]),
+                        "resolved": .object([
+                            "type": .string("boolean"),
+                            "description": .string("是否已解決（true/false）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("comment_id")])
+                ])
+            ),
+
+            // 8.2 浮動圖片
+            Tool(
+                name: "insert_floating_image",
+                description: "插入浮動圖片（可設定位置和文繞方式）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "base64": .object([
+                            "type": .string("string"),
+                            "description": .string("圖片的 Base64 編碼資料")
+                        ]),
+                        "file_name": .object([
+                            "type": .string("string"),
+                            "description": .string("圖片檔名（包含副檔名）")
+                        ]),
+                        "width": .object([
+                            "type": .string("integer"),
+                            "description": .string("圖片寬度（像素）")
+                        ]),
+                        "height": .object([
+                            "type": .string("integer"),
+                            "description": .string("圖片高度（像素）")
+                        ]),
+                        "wrap_type": .object([
+                            "type": .string("string"),
+                            "description": .string("文繞方式：square（四邊型）, tight（緊密）, through（穿透）, topAndBottom（上下）, behindText（文字下方）, inFrontOfText（文字上方）")
+                        ]),
+                        "horizontal_position": .object([
+                            "type": .string("string"),
+                            "description": .string("水平位置：left, center, right, 或具體偏移像素")
+                        ]),
+                        "vertical_position": .object([
+                            "type": .string("string"),
+                            "description": .string("垂直位置：top, center, bottom, 或具體偏移像素")
+                        ]),
+                        "relative_to_h": .object([
+                            "type": .string("string"),
+                            "description": .string("水平相對於：margin, page, column, character")
+                        ]),
+                        "relative_to_v": .object([
+                            "type": .string("string"),
+                            "description": .string("垂直相對於：margin, page, paragraph, line")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("base64"), .string("file_name"), .string("width"), .string("height")])
+                ])
+            ),
+
+            // 8.3 欄位代碼
+            Tool(
+                name: "insert_if_field",
+                description: "插入 IF 條件判斷欄位",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "left_operand": .object([
+                            "type": .string("string"),
+                            "description": .string("左運算元（可以是欄位名稱或值）")
+                        ]),
+                        "operator": .object([
+                            "type": .string("string"),
+                            "description": .string("比較運算子：=, <>, <, >, <=, >=")
+                        ]),
+                        "right_operand": .object([
+                            "type": .string("string"),
+                            "description": .string("右運算元")
+                        ]),
+                        "true_text": .object([
+                            "type": .string("string"),
+                            "description": .string("條件為真時顯示的文字")
+                        ]),
+                        "false_text": .object([
+                            "type": .string("string"),
+                            "description": .string("條件為假時顯示的文字")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("left_operand"), .string("operator"), .string("right_operand"), .string("true_text"), .string("false_text")])
+                ])
+            ),
+            Tool(
+                name: "insert_calculation_field",
+                description: "插入計算欄位（支援 SUM, AVERAGE, MAX, MIN 等）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "expression": .object([
+                            "type": .string("string"),
+                            "description": .string("計算表達式，如 'SUM(ABOVE)', 'AVERAGE(LEFT)', '=bookmark1*bookmark2'")
+                        ]),
+                        "format": .object([
+                            "type": .string("string"),
+                            "description": .string("數字格式，如 '#,##0.00'（可選）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("expression")])
+                ])
+            ),
+            Tool(
+                name: "insert_date_field",
+                description: "插入日期時間欄位",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "type": .object([
+                            "type": .string("string"),
+                            "description": .string("日期類型：date（目前日期）, time（目前時間）, createDate（建立日期）, saveDate（儲存日期）")
+                        ]),
+                        "format": .object([
+                            "type": .string("string"),
+                            "description": .string("日期格式，如 'yyyy/M/d', 'yyyy年M月d日'（可選）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index")])
+                ])
+            ),
+            Tool(
+                name: "insert_page_field",
+                description: "插入頁碼或文件資訊欄位",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "type": .object([
+                            "type": .string("string"),
+                            "description": .string("欄位類型：page（頁碼）, numPages（總頁數）, fileName（檔名）, author（作者）, numWords（字數）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("type")])
+                ])
+            ),
+            Tool(
+                name: "insert_merge_field",
+                description: "插入合併列印欄位",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "field_name": .object([
+                            "type": .string("string"),
+                            "description": .string("欄位名稱（對應資料來源的欄位）")
+                        ]),
+                        "text_before": .object([
+                            "type": .string("string"),
+                            "description": .string("前置文字（僅當欄位非空時顯示）")
+                        ]),
+                        "text_after": .object([
+                            "type": .string("string"),
+                            "description": .string("後置文字（僅當欄位非空時顯示）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("field_name")])
+                ])
+            ),
+            Tool(
+                name: "insert_sequence_field",
+                description: "插入序列欄位（自動編號，用於圖表編號等）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "identifier": .object([
+                            "type": .string("string"),
+                            "description": .string("序列識別符，如 'Figure', 'Table', 'Equation'")
+                        ]),
+                        "format": .object([
+                            "type": .string("string"),
+                            "description": .string("編號格式：arabic（1,2,3）, alphabetic（A,B,C）, roman（I,II,III）")
+                        ]),
+                        "reset_level": .object([
+                            "type": .string("integer"),
+                            "description": .string("重設層級（對應標題層級，如設為 1 則每遇到 Heading1 就重設）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("identifier")])
+                ])
+            ),
+
+            // 8.4 重複區段控制項
+            Tool(
+                name: "insert_content_control",
+                description: "插入內容控制項（SDT）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "paragraph_index": .object([
+                            "type": .string("integer"),
+                            "description": .string("段落索引（從 0 開始）")
+                        ]),
+                        "type": .object([
+                            "type": .string("string"),
+                            "description": .string("控制項類型：richText, plainText, picture, date, dropDownList, comboBox, checkbox")
+                        ]),
+                        "tag": .object([
+                            "type": .string("string"),
+                            "description": .string("控制項標籤（用於識別）")
+                        ]),
+                        "alias": .object([
+                            "type": .string("string"),
+                            "description": .string("控制項顯示名稱")
+                        ]),
+                        "placeholder": .object([
+                            "type": .string("string"),
+                            "description": .string("佔位符提示文字")
+                        ]),
+                        "content": .object([
+                            "type": .string("string"),
+                            "description": .string("預設內容")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("paragraph_index"), .string("type"), .string("tag")])
+                ])
+            ),
+            Tool(
+                name: "insert_repeating_section",
+                description: "插入重複區段（可新增/刪除項目的區塊）",
+                inputSchema: .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "doc_id": .object([
+                            "type": .string("string"),
+                            "description": .string("文件識別碼")
+                        ]),
+                        "index": .object([
+                            "type": .string("integer"),
+                            "description": .string("插入位置（段落索引）")
+                        ]),
+                        "tag": .object([
+                            "type": .string("string"),
+                            "description": .string("區段標籤（用於識別）")
+                        ]),
+                        "section_title": .object([
+                            "type": .string("string"),
+                            "description": .string("區段標題（顯示在 UI）")
+                        ]),
+                        "items": .object([
+                            "type": .string("array"),
+                            "description": .string("初始項目內容（字串陣列）")
+                        ])
+                    ]),
+                    "required": .array([.string("doc_id"), .string("tag")])
+                ])
             )
         ]
     }
@@ -1963,6 +2311,36 @@ actor WordMCPServer {
             return try await setCharacterSpacing(args: args)
         case "set_text_effect":
             return try await setTextEffect(args: args)
+
+        // 8.1 註解回覆與解析
+        case "reply_to_comment":
+            return try await replyToComment(args: args)
+        case "resolve_comment":
+            return try await resolveComment(args: args)
+
+        // 8.2 浮動圖片
+        case "insert_floating_image":
+            return try await insertFloatingImage(args: args)
+
+        // 8.3 欄位代碼
+        case "insert_if_field":
+            return try await insertIfField(args: args)
+        case "insert_calculation_field":
+            return try await insertCalculationField(args: args)
+        case "insert_date_field":
+            return try await insertDateField(args: args)
+        case "insert_page_field":
+            return try await insertPageField(args: args)
+        case "insert_merge_field":
+            return try await insertMergeField(args: args)
+        case "insert_sequence_field":
+            return try await insertSequenceField(args: args)
+
+        // 8.4 內容控制項（SDT）
+        case "insert_content_control":
+            return try await insertContentControl(args: args)
+        case "insert_repeating_section":
+            return try await insertRepeatingSection(args: args)
 
         default:
             throw WordError.unknownTool(name)
@@ -3733,5 +4111,429 @@ actor WordMCPServer {
         openDocuments[docId] = doc
 
         return "Applied '\(effectType)' effect to paragraph \(paragraphIndex)"
+    }
+
+    // MARK: - 8.1 Comment Replies and Resolution
+
+    private func replyToComment(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let commentId = args["comment_id"]?.intValue else {
+            throw WordError.missingParameter("comment_id")
+        }
+        guard let replyText = args["reply_text"]?.stringValue else {
+            throw WordError.missingParameter("reply_text")
+        }
+        let author = args["author"]?.stringValue ?? "User"
+
+        // 使用 CommentsCollection.addReply 方法
+        guard let reply = doc.comments.addReply(to: commentId, author: author, text: replyText) else {
+            throw WordError.invalidParameter("comment_id", "Comment with ID \(commentId) not found")
+        }
+
+        openDocuments[docId] = doc
+        return "Added reply to comment \(commentId) by \(author) (reply ID: \(reply.id))"
+    }
+
+    private func resolveComment(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let commentId = args["comment_id"]?.intValue else {
+            throw WordError.missingParameter("comment_id")
+        }
+        let resolved = args["resolved"]?.boolValue ?? true
+
+        // 使用 CommentsCollection.markAsDone 方法
+        doc.comments.markAsDone(commentId, done: resolved)
+        openDocuments[docId] = doc
+
+        return "Comment \(commentId) \(resolved ? "resolved" : "reopened")"
+    }
+
+    // MARK: - 8.2 Floating Images
+
+    private func insertFloatingImage(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let path = args["path"]?.stringValue else {
+            throw WordError.missingParameter("path")
+        }
+
+        let paragraphIndex = args["paragraph_index"]?.intValue ?? 0
+        let widthEmu = args["width"]?.intValue ?? 2000000  // ~2 inches default
+        let heightEmu = args["height"]?.intValue ?? 2000000
+        let horizontalPos = args["horizontal_position"]?.intValue ?? 0
+        let verticalPos = args["vertical_position"]?.intValue ?? 0
+        let wrapTypeStr = args["wrap_type"]?.stringValue ?? "square"
+        let horizontalRelative = args["horizontal_relative"]?.stringValue ?? "column"
+        let allowOverlap = args["allow_overlap"]?.boolValue ?? true
+
+        // 讀取圖片數據
+        let url = URL(fileURLWithPath: path)
+        let imageData = try Data(contentsOf: url)
+
+        // 建立圖片參照
+        let imageId = "rId\(doc.images.count + 10)"
+        let imageRef = ImageReference(
+            id: imageId,
+            fileName: url.lastPathComponent,
+            contentType: detectImageContentType(from: url),
+            data: imageData
+        )
+        doc.images.append(imageRef)
+
+        // 建立浮動圖片定位
+        var anchorPosition = AnchorPosition()
+        anchorPosition.horizontalOffset = horizontalPos
+        anchorPosition.verticalOffset = verticalPos
+        anchorPosition.allowOverlap = allowOverlap
+
+        // 設定水平參照點
+        if let hrel = HorizontalRelativeFrom(rawValue: horizontalRelative) {
+            anchorPosition.horizontalRelativeFrom = hrel
+        }
+
+        // 設定文繞圖類型
+        switch wrapTypeStr.lowercased() {
+        case "none": anchorPosition.wrapType = .none
+        case "square": anchorPosition.wrapType = .square
+        case "tight": anchorPosition.wrapType = .tight
+        case "through": anchorPosition.wrapType = .through
+        case "topandbottom": anchorPosition.wrapType = .topAndBottom
+        case "behindtext": anchorPosition.wrapType = .behindText
+        case "infrontoftext": anchorPosition.wrapType = .inFrontOfText
+        default: anchorPosition.wrapType = .square
+        }
+
+        // 建立浮動繪圖
+        let drawing = Drawing.anchor(
+            width: widthEmu,
+            height: heightEmu,
+            imageId: imageId,
+            position: anchorPosition,
+            name: url.lastPathComponent
+        )
+
+        // 插入到段落
+        try doc.insertDrawing(drawing, at: paragraphIndex)
+        openDocuments[docId] = doc
+
+        return "Inserted floating image '\(url.lastPathComponent)' at paragraph \(paragraphIndex)"
+    }
+
+    private func detectImageContentType(from url: URL) -> String {
+        let ext = url.pathExtension.lowercased()
+        switch ext {
+        case "png": return "image/png"
+        case "jpg", "jpeg": return "image/jpeg"
+        case "gif": return "image/gif"
+        case "bmp": return "image/bmp"
+        case "tiff", "tif": return "image/tiff"
+        default: return "image/png"
+        }
+    }
+
+    // MARK: - 8.3 Field Codes
+
+    private func insertIfField(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let leftOperand = args["left_operand"]?.stringValue else {
+            throw WordError.missingParameter("left_operand")
+        }
+        guard let operatorStr = args["operator"]?.stringValue else {
+            throw WordError.missingParameter("operator")
+        }
+        guard let rightOperand = args["right_operand"]?.stringValue else {
+            throw WordError.missingParameter("right_operand")
+        }
+        guard let trueText = args["true_text"]?.stringValue else {
+            throw WordError.missingParameter("true_text")
+        }
+        guard let falseText = args["false_text"]?.stringValue else {
+            throw WordError.missingParameter("false_text")
+        }
+
+        // 轉換運算符字串為 enum
+        let compOp: IFField.ComparisonOperator
+        switch operatorStr {
+        case "=", "==": compOp = .equal
+        case "<>", "!=": compOp = .notEqual
+        case "<": compOp = .lessThan
+        case ">": compOp = .greaterThan
+        case "<=": compOp = .lessThanOrEqual
+        case ">=": compOp = .greaterThanOrEqual
+        default: compOp = .equal
+        }
+
+        let ifField = IFField(
+            leftOperand: leftOperand,
+            comparisonOperator: compOp,
+            rightOperand: rightOperand,
+            trueText: trueText,
+            falseText: falseText
+        )
+
+        try doc.insertFieldCode(ifField, at: paragraphIndex)
+        openDocuments[docId] = doc
+
+        return "Inserted IF field at paragraph \(paragraphIndex): IF \(leftOperand) \(operatorStr) \(rightOperand)"
+    }
+
+    private func insertCalculationField(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let expression = args["expression"]?.stringValue else {
+            throw WordError.missingParameter("expression")
+        }
+        let format = args["format"]?.stringValue
+
+        // 表達式可以是完整的如 "=SUM(ABOVE)" 或 "SUM(ABOVE)"
+        let calcField = CalculationField(
+            expression: expression,
+            numberFormat: format
+        )
+
+        try doc.insertFieldCode(calcField, at: paragraphIndex)
+        openDocuments[docId] = doc
+
+        return "Inserted calculation field '\(expression)' at paragraph \(paragraphIndex)"
+    }
+
+    private func insertDateField(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        let format = args["format"]?.stringValue ?? "yyyy-MM-dd"
+        let typeStr = args["type"]?.stringValue ?? "DATE"
+
+        let fieldType: DateTimeFieldType
+        switch typeStr.uppercased() {
+        case "DATE": fieldType = .date
+        case "TIME": fieldType = .time
+        case "PRINTDATE": fieldType = .printDate
+        case "SAVEDATE": fieldType = .saveDate
+        case "CREATEDATE": fieldType = .createDate
+        case "EDITTIME": fieldType = .editTime
+        default: fieldType = .date
+        }
+
+        let dateField = DateTimeField(type: fieldType, dateFormat: format)
+
+        try doc.insertFieldCode(dateField, at: paragraphIndex)
+        openDocuments[docId] = doc
+
+        return "Inserted \(typeStr) field with format '\(format)' at paragraph \(paragraphIndex)"
+    }
+
+    private func insertPageField(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        let typeStr = args["type"]?.stringValue ?? "PAGE"
+
+        let infoType: DocumentInfoFieldType
+        switch typeStr.uppercased() {
+        case "PAGE": infoType = .page
+        case "NUMPAGES": infoType = .numPages
+        case "NUMWORDS": infoType = .numWords
+        case "NUMCHARS": infoType = .numChars
+        case "FILENAME": infoType = .fileName
+        case "AUTHOR": infoType = .author
+        case "TITLE": infoType = .title
+        case "SECTIONPAGES": infoType = .sectionPages
+        default: infoType = .page
+        }
+
+        let infoField = DocumentInfoField(type: infoType)
+
+        try doc.insertFieldCode(infoField, at: paragraphIndex)
+        openDocuments[docId] = doc
+
+        return "Inserted \(typeStr) field at paragraph \(paragraphIndex)"
+    }
+
+    private func insertMergeField(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let fieldName = args["field_name"]?.stringValue else {
+            throw WordError.missingParameter("field_name")
+        }
+        let textBefore = args["text_before"]?.stringValue
+        let textAfter = args["text_after"]?.stringValue
+
+        let mergeField = MergeField(
+            fieldName: fieldName,
+            textBefore: textBefore,
+            textAfter: textAfter
+        )
+
+        try doc.insertFieldCode(mergeField, at: paragraphIndex)
+        openDocuments[docId] = doc
+
+        return "Inserted MERGEFIELD '\(fieldName)' at paragraph \(paragraphIndex)"
+    }
+
+    private func insertSequenceField(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let identifier = args["identifier"]?.stringValue else {
+            throw WordError.missingParameter("identifier")
+        }
+        let resetOnHeading = args["reset_on_heading"]?.intValue
+
+        let seqField = SequenceField(
+            identifier: identifier,
+            resetLevel: resetOnHeading
+        )
+
+        try doc.insertFieldCode(seqField, at: paragraphIndex)
+        openDocuments[docId] = doc
+
+        return "Inserted SEQ '\(identifier)' field at paragraph \(paragraphIndex)"
+    }
+
+    // MARK: - 8.4 Content Controls (SDT)
+
+    private func insertContentControl(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let paragraphIndex = args["paragraph_index"]?.intValue else {
+            throw WordError.missingParameter("paragraph_index")
+        }
+        guard let typeStr = args["type"]?.stringValue else {
+            throw WordError.missingParameter("type")
+        }
+        guard let tag = args["tag"]?.stringValue else {
+            throw WordError.missingParameter("tag")
+        }
+
+        let alias = args["alias"]?.stringValue
+        let placeholder = args["placeholder"]?.stringValue
+        let contentText = args["content"]?.stringValue ?? ""
+
+        guard let sdtType = SDTType(rawValue: typeStr) else {
+            throw WordError.invalidParameter("type", "Unknown SDT type: \(typeStr). Valid: richText, text, picture, date, dropDownList, comboBox, checkbox")
+        }
+
+        // 使用正確的初始化順序
+        let sdt = StructuredDocumentTag(
+            id: Int.random(in: 100000...999999),
+            tag: tag,
+            alias: alias,
+            type: sdtType,
+            placeholder: placeholder
+        )
+
+        // 使用 ContentControl 包裝
+        let contentControl = ContentControl(sdt: sdt, content: contentText)
+
+        try doc.insertContentControl(contentControl, at: paragraphIndex)
+        openDocuments[docId] = doc
+
+        return "Inserted \(typeStr) content control '\(tag)' at paragraph \(paragraphIndex)"
+    }
+
+    private func insertRepeatingSection(args: [String: Value]) async throws -> String {
+        guard let docId = args["doc_id"]?.stringValue else {
+            throw WordError.missingParameter("doc_id")
+        }
+        guard var doc = openDocuments[docId] else {
+            throw WordError.documentNotFound(docId)
+        }
+        guard let tag = args["tag"]?.stringValue else {
+            throw WordError.missingParameter("tag")
+        }
+
+        let index = args["index"]?.intValue ?? 0
+        let sectionTitle = args["section_title"]?.stringValue
+        let itemsArray = args["items"]?.arrayValue ?? []
+
+        // 解析初始項目
+        var items: [RepeatingSectionItem] = []
+        for item in itemsArray {
+            if let content = item.stringValue {
+                let rsItem = RepeatingSectionItem(
+                    tag: nil,
+                    content: content
+                )
+                items.append(rsItem)
+            }
+        }
+
+        // 如果沒有初始項目，創建一個空的
+        if items.isEmpty {
+            items.append(RepeatingSectionItem(content: ""))
+        }
+
+        // 使用正確的初始化方式
+        let repeatingSection = RepeatingSection(
+            tag: tag,
+            alias: sectionTitle,
+            items: items,
+            allowInsertDeleteSections: true,
+            sectionTitle: sectionTitle
+        )
+
+        try doc.insertRepeatingSection(repeatingSection, at: index)
+        openDocuments[docId] = doc
+
+        return "Inserted repeating section '\(tag)' with \(items.count) item(s) at index \(index)"
     }
 }

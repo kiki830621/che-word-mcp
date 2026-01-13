@@ -1319,8 +1319,11 @@ struct WordDocument {
                     body.children[actualIndex] = .paragraph(para)
                 }
             }
-        case .formatting, .paragraphChange:
+        case .formatting, .paragraphChange, .formatChange:
             // 接受格式變更：保留新格式
+            break
+        case .moveFrom, .moveTo:
+            // 接受移動：保留目標位置的文字
             break
         }
 
@@ -1360,8 +1363,11 @@ struct WordDocument {
         case .deletion:
             // 拒絕刪除：恢復被刪除的文字（文字已在標記中，移除標記即可）
             break
-        case .formatting, .paragraphChange:
+        case .formatting, .paragraphChange, .formatChange:
             // 拒絕格式變更：恢復原格式（需要實作格式恢復邏輯）
+            break
+        case .moveFrom, .moveTo:
+            // 拒絕移動：恢復原位置的文字
             break
         }
 
@@ -1843,5 +1849,117 @@ extension WordDocument {
                 childIndex += 1
             }
         }
+    }
+
+    // MARK: - Drawing Operations
+
+    /// 插入繪圖元素（圖片）到指定段落
+    mutating func insertDrawing(_ drawing: Drawing, at paragraphIndex: Int) throws {
+        guard paragraphIndex >= 0 && paragraphIndex <= getParagraphs().count else {
+            throw WordError.invalidIndex(paragraphIndex)
+        }
+
+        // 建立包含繪圖的 Run
+        let drawingRun = Run.withDrawing(drawing)
+
+        // 如果段落索引有效，將繪圖添加到該段落
+        var childIndex = 0
+        for (i, child) in body.children.enumerated() {
+            if case .paragraph(var para) = child {
+                if childIndex == paragraphIndex {
+                    para.runs.append(drawingRun)
+                    body.children[i] = .paragraph(para)
+                    return
+                }
+                childIndex += 1
+            }
+        }
+
+        // 如果超出範圍，創建新段落
+        var newPara = Paragraph()
+        newPara.runs = [drawingRun]
+        body.children.append(.paragraph(newPara))
+    }
+
+    // MARK: - Field Code Operations
+
+    /// 插入欄位代碼到指定段落
+    mutating func insertFieldCode<F: FieldCode>(_ field: F, at paragraphIndex: Int) throws {
+        guard paragraphIndex >= 0 && paragraphIndex <= getParagraphs().count else {
+            throw WordError.invalidIndex(paragraphIndex)
+        }
+
+        // 產生欄位 XML 並包裝成 Run
+        let fieldXML = field.toFieldXML()
+        var fieldRun = Run(text: "")
+        fieldRun.rawXML = fieldXML  // 使用 raw XML 方式
+
+        var childIndex = 0
+        for (i, child) in body.children.enumerated() {
+            if case .paragraph(var para) = child {
+                if childIndex == paragraphIndex {
+                    para.runs.append(fieldRun)
+                    body.children[i] = .paragraph(para)
+                    return
+                }
+                childIndex += 1
+            }
+        }
+
+        // 如果超出範圍，創建新段落
+        var newPara = Paragraph()
+        newPara.runs = [fieldRun]
+        body.children.append(.paragraph(newPara))
+    }
+
+    // MARK: - Content Control (SDT) Operations
+
+    /// 插入內容控制項到指定段落
+    mutating func insertContentControl(_ control: ContentControl, at paragraphIndex: Int) throws {
+        guard paragraphIndex >= 0 && paragraphIndex <= getParagraphs().count else {
+            throw WordError.invalidIndex(paragraphIndex)
+        }
+
+        // 產生 SDT XML 並包裝成段落層級元素
+        let sdtXML = control.toXML()
+        var sdtPara = Paragraph()
+        var sdtRun = Run(text: "")
+        sdtRun.rawXML = sdtXML
+        sdtPara.runs = [sdtRun]
+
+        // 插入到指定位置
+        var childIndex = 0
+        var insertPosition = body.children.count
+
+        for (i, child) in body.children.enumerated() {
+            if case .paragraph = child {
+                if childIndex == paragraphIndex {
+                    insertPosition = i
+                    break
+                }
+                childIndex += 1
+            }
+        }
+
+        body.children.insert(.paragraph(sdtPara), at: insertPosition)
+    }
+
+    // MARK: - Repeating Section Operations
+
+    /// 插入重複區段到指定位置
+    mutating func insertRepeatingSection(_ section: RepeatingSection, at index: Int) throws {
+        guard index >= 0 && index <= body.children.count else {
+            throw WordError.invalidIndex(index)
+        }
+
+        // 產生重複區段 XML
+        let sectionXML = section.toXML()
+        var sectionPara = Paragraph()
+        var sectionRun = Run(text: "")
+        sectionRun.rawXML = sectionXML
+        sectionPara.runs = [sectionRun]
+
+        // 插入到指定位置
+        body.children.insert(.paragraph(sectionPara), at: min(index, body.children.count))
     }
 }
