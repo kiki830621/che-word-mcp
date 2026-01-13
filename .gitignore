@@ -28,3 +28,4 @@ xcuserdata/
 *.md
 !README.md
 !README_zh-TW.md
+!docs/**/*.md
