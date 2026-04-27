@@ -1,5 +1,6 @@
 # che-word-mcp
 
+[![SafeSkill 50/100](https://img.shields.io/badge/SafeSkill-50%2F100_Use%20with%20Caution-orange)](https://safeskill.dev/scan/psychquant-che-word-mcp)
 A Swift-native MCP (Model Context Protocol) server for Microsoft Word document (.docx) manipulation. This is the **first Swift OOXML library** that directly manipulates Office Open XML without any third-party Word dependencies.
 
 [中文說明](README_zh-TW.md)
