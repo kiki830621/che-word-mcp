@@ -238,6 +238,15 @@ curl -o .claude/skills/che-word-mcp/SKILL.md \
 
 ## Available Tools (233 Total)
 
+### Paragraph Index Conventions
+
+`paragraph_index` / `index` are historical parameter names and do not always
+count the same OOXML surface. Insert tools generally use a `body.children`
+insertion index; direct paragraph mutation tools generally use a top-level
+paragraph ordinal; readback tools such as `get_paragraphs` use their own
+returned paragraph order. See [docs/paragraph-index-conventions.md](docs/paragraph-index-conventions.md)
+before reusing an index across tools.
+
 ### Document Management (6 tools)
 
 | Tool | Description |
