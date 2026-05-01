@@ -2543,7 +2543,7 @@ actor WordMCPServer {
                         ]),
                         "paragraph_index": .object([
                             "type": .string("integer"),
-                            "description": .string("body.children 索引（從 0 開始；計入 tables / SDTs / bookmarkMarker / rawBlockElement，**不**等同於 get_paragraphs 回傳的 paragraph-only count）。display mode 下若搭配 anchor，anchor 優先；inline 模式直接以此索引插入。lib API 在 #61 / #69 系列已對齊到 body.children index；參數命名沿用「paragraph_index」是歷史遺留，跨工具語意統一見 PsychQuant/ooxml-swift#10。")
+                            "description": .string("display_mode=true：body.children 插入索引（從 0 開始；計入 tables / SDTs / bookmarkMarker / rawBlockElement，**不**等同於 get_paragraphs 回傳的 paragraph-only count），若搭配其他 anchor 則 anchor 衝突會回錯。display_mode=false：top-level `.paragraph` ordinal（從 0 開始；不計入 tables / SDTs / bookmarkMarker / rawBlockElement），且 inline 模式沒有其他 anchor 時必填；inline 會把 OMML run append 到該既有段落。參數命名沿用「paragraph_index」是歷史遺留，跨工具語意統一見 PsychQuant/ooxml-swift#10。")
                         ]),
                         "into_table_cell": .object([
                             "type": .string("object"),
@@ -8855,6 +8855,10 @@ actor WordMCPServer {
         // which produces broken plain-text OOXML — see Insert step below for
         // full rationale. Path origin is preserved in error messages but the
         // insertion mechanic is unified.
+        if args["components"] != nil && args["latex"] != nil {
+            return "Error: insert_equation: pass either 'components' (JSON tree) OR 'latex' (LaTeX subset), not both"
+        }
+
         let components: [MathComponent]
         if let componentsValue = args["components"] {
             do {
@@ -8880,7 +8884,15 @@ actor WordMCPServer {
             return "Error: insert_equation: either 'components' (JSON tree) or 'latex' (LaTeX subset) argument required"
         }
 
-        let displayMode = args["display_mode"]?.boolValue ?? true
+        let displayMode: Bool
+        if let displayModeValue = args["display_mode"] {
+            guard let bool = displayModeValue.boolValue else {
+                return "Error: insert_equation: display_mode must be a boolean true/false, not a string or other JSON type"
+            }
+            displayMode = bool
+        } else {
+            displayMode = true
+        }
         let paragraphIndex = args["paragraph_index"]?.intValue
         let afterText = args["after_text"]?.stringValue
         let beforeText = args["before_text"]?.stringValue

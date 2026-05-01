@@ -379,12 +379,127 @@ final class Issue98InsertEquationLibBypassTests: XCTestCase {
         )
     }
 
+    // MARK: - Issue 105/106/107: argument contract hardening
+
+    func testInsertEquationRejectsComponentsAndLatexTogether() async throws {
+        let url = try minimalDocxFiveParas()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let server = await WordMCPServer()
+
+        _ = await server.invokeToolForTesting(
+            name: "open_document",
+            arguments: ["path": .string(url.path), "doc_id": .string("e106")]
+        )
+
+        let r = await server.invokeToolForTesting(
+            name: "insert_equation",
+            arguments: [
+                "doc_id": .string("e106"),
+                "components": .object([
+                    "type": .string("run"),
+                    "text": .string("component-x")
+                ]),
+                "latex": .string("latex-y")
+            ]
+        )
+        let txt = textOf(r)
+        XCTAssertFalse(
+            txt.contains("Inserted equation"),
+            "components + latex conflict must not silently choose one path; got: \(txt)"
+        )
+        XCTAssertTrue(
+            txt.contains("components") && txt.contains("latex") && txt.lowercased().contains("not both"),
+            "expected conflict error mentioning components, latex, and not both; got: \(txt)"
+        )
+    }
+
+    func testInsertEquationRejectsStringDisplayMode() async throws {
+        let url = try minimalDocxFiveParas()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let server = await WordMCPServer()
+
+        _ = await server.invokeToolForTesting(
+            name: "open_document",
+            arguments: ["path": .string(url.path), "doc_id": .string("e107")]
+        )
+
+        let r = await server.invokeToolForTesting(
+            name: "insert_equation",
+            arguments: [
+                "doc_id": .string("e107"),
+                "latex": .string("x"),
+                "display_mode": .string("false")
+            ]
+        )
+        let txt = textOf(r)
+        XCTAssertFalse(
+            txt.contains("Inserted equation"),
+            "string display_mode must not fail open to default display mode; got: \(txt)"
+        )
+        XCTAssertTrue(
+            txt.contains("display_mode") && txt.lowercased().contains("boolean"),
+            "expected type error mentioning display_mode and boolean; got: \(txt)"
+        )
+    }
+
+    func testParagraphIndexSchemaDocumentsDisplayAndInlineOrdinals() throws {
+        let source = try serverSource()
+        guard let toolStart = source.range(
+            of: #"Tool\(\s*\n\s*name: "insert_equation""#,
+            options: .regularExpression
+        ) else {
+            XCTFail("could not locate insert_equation tool schema")
+            return
+        }
+
+        let toolSource = source[toolStart.lowerBound...]
+        guard let paragraphStart = toolSource.range(of: #""paragraph_index": .object(["#),
+              let nextProperty = toolSource[paragraphStart.lowerBound...].range(
+                of: #""into_table_cell": .object(["#
+              ) else {
+            XCTFail("could not locate insert_equation paragraph_index schema block")
+            return
+        }
+
+        let snippet = String(toolSource[paragraphStart.lowerBound..<nextProperty.lowerBound])
+        XCTAssertTrue(
+            snippet.contains("display_mode=true") && snippet.contains("body.children"),
+            "display mode schema must preserve body.children insertion-index contract; got: \(snippet)"
+        )
+        XCTAssertTrue(
+            snippet.contains("display_mode=false")
+                && snippet.contains("top-level `.paragraph`")
+                && snippet.contains("不計入 tables / SDTs"),
+            "inline mode schema must document paragraph-only ordinal contract; got: \(snippet)"
+        )
+        XCTAssertFalse(
+            snippet.contains("inline 模式直接以此索引插入"),
+            "schema must not imply inline mode directly uses body.children ordinal; got: \(snippet)"
+        )
+    }
+
     // MARK: - Helpers
 
     private func textOf(_ r: CallTool.Result) -> String {
         r.content.compactMap { item -> String? in
             if case let .text(t, _, _) = item { return t } else { return nil }
         }.joined(separator: "\n")
+    }
+
+    private func serverSource() throws -> String {
+        let serverPath: URL = {
+            if let src = ProcessInfo.processInfo.environment["SOURCE_ROOT"] {
+                return URL(fileURLWithPath: src).appendingPathComponent("Sources/CheWordMCP/Server.swift")
+            }
+            var url = URL(fileURLWithPath: #filePath)
+            while url.pathComponents.count > 1 {
+                url = url.deletingLastPathComponent()
+                let candidate = url.appendingPathComponent("Sources/CheWordMCP/Server.swift")
+                if FileManager.default.fileExists(atPath: candidate.path) { return candidate }
+            }
+            return URL(fileURLWithPath: "/dev/null")
+        }()
+        return try String(contentsOf: serverPath, encoding: .utf8)
     }
 
     /// Extract `word/document.xml` from a .docx (zip) at the given path.
