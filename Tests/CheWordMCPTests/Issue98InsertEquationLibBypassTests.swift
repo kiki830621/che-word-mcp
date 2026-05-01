@@ -478,6 +478,53 @@ final class Issue98InsertEquationLibBypassTests: XCTestCase {
         )
     }
 
+    // MARK: - Issues 108/109/110: follow-up docs and dead-code cleanup
+
+    func testDisplayModeSchemaDocumentsMCPDefaultDivergence() throws {
+        let source = try serverSource()
+        guard let toolStart = source.range(
+            of: #"Tool\(\s*\n\s*name: "insert_equation""#,
+            options: .regularExpression
+        ) else {
+            XCTFail("could not locate insert_equation tool schema")
+            return
+        }
+
+        let toolSource = String(source[toolStart.lowerBound...])
+        XCTAssertTrue(
+            toolSource.contains("MCP 工具層 display_mode 預設 true")
+                && toolSource.contains("OOXMLSwift lib API 的預設值不同"),
+            "insert_equation tool description must document the MCP-vs-lib display_mode default divergence"
+        )
+        XCTAssertTrue(
+            toolSource.contains("底層 OOXMLSwift lib API 的預設值為 false")
+                && toolSource.contains("MCP 因 agent 常用區塊公式而保留 true"),
+            "display_mode property schema must explain why MCP keeps default true while the lib default is false"
+        )
+    }
+
+    func testHandlerDocumentsDisplayAppendFallback() throws {
+        let source = try serverSource()
+        XCTAssertTrue(
+            source.contains("Display mode with no explicit anchor appends at end by passing")
+                && source.contains("body.children.count")
+                && source.contains("as append-at-end"),
+            "handler must document display-mode + nil paragraph_index append fallback semantics"
+        )
+    }
+
+    func testServerNoLongerThrowsOrCatchesDeadInlineModeRequiresParagraphIndex() throws {
+        let source = try serverSource()
+        XCTAssertFalse(
+            source.contains("throw InsertLocationError.inlineModeRequiresParagraphIndex"),
+            "insert_equation handler should not throw the unreachable inlineModeRequiresParagraphIndex defensive path"
+        )
+        XCTAssertFalse(
+            source.contains("catch InsertLocationError.inlineModeRequiresParagraphIndex"),
+            "insert_equation handler should not keep the unreachable inlineModeRequiresParagraphIndex catch arm"
+        )
+    }
+
     // MARK: - Helpers
 
     private func textOf(_ r: CallTool.Result) -> String {
