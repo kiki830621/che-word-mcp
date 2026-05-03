@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.18.1] - 2026-05-03
+
+### Fixed (transitive) — `search_text` includes inline OMath text content (auto-resolves [#155](https://github.com/PsychQuant/che-word-mcp/issues/155))
+
+Transitive dependency bump only. `Package.resolved` pinned at `ooxml-swift v0.21.11` → `v0.22.1` ([release notes](https://github.com/PsychQuant/ooxml-swift/releases/tag/v0.22.1)). Closes [PsychQuant/ooxml-swift#43](https://github.com/PsychQuant/ooxml-swift/issues/43) which collapses the `Paragraph.getText()` vs `flattenedDisplayText()` divergence.
+
+Effect on `che-word-mcp__search_text`: callers can now grep for inline math symbols (α / β / γ / θ / λ / t) that previously fell into silent zero gaps because the legacy `getText()` path stripped OMath. Position arithmetic now matches anchor-matching (`before_text` / `after_text`) paths.
+
+No MCP source change. `Server.swift:10310` still calls `para.getText()`, but that method now delegates to the canonical text-extraction path.
+
+#### Downstream
+
+- **`kiki830621/collaboration_guo_analysis#6`** (thesis 30 inline math symbols): unblocked from automation. Re-running `search_text "進行t檢定"` against `碩士論文.docx` para 324 now returns a match.
+- **`PsychQuant/che-word-mcp#155`** (parent / mirror): auto-resolves.
+
+#### How this release was made
+
+`/idd-all #43 --cwd /Users/che/Developer/macdoc/packages/ooxml-swift` (cross-repo IDD orchestration v2.40.0). Closing summary at [ooxml-swift#43](https://github.com/PsychQuant/ooxml-swift/issues/43#issuecomment-4365430488).
+
 ## [3.18.0] - 2026-05-03
 
 ### Added — `insert_equation` argument-contract hardening (closes #105 #106 #107)
