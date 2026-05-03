@@ -1,5 +1,18 @@
 # Paragraph Index Conventions
 
+> **Status — current behavior, canonical pick pending.**
+> This document describes the *current* `paragraph_index` conventions across
+> MCP tools, which differ between insert / mutate / readback families. The
+> canonical convention pick (so callers can rely on one universal index
+> family) is tracked in
+> [PsychQuant/ooxml-swift#10](https://github.com/PsychQuant/ooxml-swift/issues/10)
+> and a future macdoc Spectra change. Until that lands, callers should
+> consult the per-tool inventory below rather than assume one universal
+> index family. Schema descriptions in `Server.swift` are being updated
+> incrementally — if a tool's schema text says only `段落索引（從 0 開始）`
+> without specifying which family, treat that as stale and look it up here.
+> Schema-audit follow-up: [#138](https://github.com/PsychQuant/che-word-mcp/issues/138).
+
 `paragraph_index` and `index` are historical names in this project. They do
 not always count the same thing, because inserting a new OOXML block and
 mutating an existing paragraph use different coordinate systems.

@@ -241,11 +241,14 @@ curl -o .claude/skills/che-word-mcp/SKILL.md \
 ### Paragraph Index Conventions
 
 `paragraph_index` / `index` are historical parameter names and do not always
-count the same OOXML surface. Insert tools generally use a `body.children`
-insertion index; direct paragraph mutation tools generally use a top-level
-paragraph ordinal; readback tools such as `get_paragraphs` use their own
-returned paragraph order. See [docs/paragraph-index-conventions.md](docs/paragraph-index-conventions.md)
-before reusing an index across tools.
+count the same OOXML surface. **Different insert / mutate / readback tools
+use different conventions** — there is no universal default to assume.
+Three coordinate systems coexist:
+`body.children` insertion index (used by some inserts), top-level paragraph
+ordinal (used by most mutate operations and inline equation insertion),
+and `get_paragraphs` readback order (for inspection). See
+[docs/paragraph-index-conventions.md](docs/paragraph-index-conventions.md)
+for the per-tool inventory before reusing an index across tools.
 
 ### Document Management (6 tools)
 

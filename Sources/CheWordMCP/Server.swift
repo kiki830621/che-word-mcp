@@ -2657,7 +2657,7 @@ actor WordMCPServer {
                         ]),
                         "paragraph_index": .object([
                             "type": .string("integer"),
-                            "description": .string("段落索引（從 0 開始）")
+                            "description": .string("Top-level paragraph ordinal（從 0 開始；不計入 tables / SDTs / bookmarkMarker / rawBlockElement）。詳見 docs/paragraph-index-conventions.md。")
                         ]),
                         "effect": .object([
                             "type": .string("string"),
