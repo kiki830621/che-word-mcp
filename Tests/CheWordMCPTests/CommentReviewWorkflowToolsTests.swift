@@ -124,6 +124,70 @@ final class CommentReviewWorkflowToolsTests: XCTestCase {
         XCTAssertFalse(text.contains("caption"), text)
     }
 
+    // MARK: - Issue #130 — Int.max overflow regression
+
+    func testFindInlineMathGapsClampsHugeContextChars() async throws {
+        // Pre-fix: `i + contextChars` with contextChars = Int.max trapped on
+        // arithmetic overflow → MCP server actor crashed. Post-fix clamps
+        // contextChars to 4096 before the addition. Verify the call returns
+        // a normal JSON response without crashing.
+        let url = try writeGapFixture()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let server = await WordMCPServer()
+
+        _ = await server.invokeToolForTesting(
+            name: "open_document",
+            arguments: ["path": .string(url.path), "doc_id": .string("gap_intmax")]
+        )
+
+        let result = await server.invokeToolForTesting(
+            name: "find_inline_math_gaps",
+            arguments: [
+                "doc_id": .string("gap_intmax"),
+                "context_chars": .int(.max)
+            ]
+        )
+        let text = textOf(result)
+        XCTAssertFalse(
+            text.lowercased().contains("error"),
+            "expected clamped context_chars to succeed without server-side error; got: \(text)"
+        )
+        // Sanity: response should still surface the body-level gap fixture.
+        XCTAssertTrue(
+            text.contains(#""paragraph_index":0"#),
+            "expected normal gap output post-clamp; got: \(text)"
+        )
+    }
+
+    func testFindInlineMathGapsClampsHugeMinGapChars() async throws {
+        // min_gap_chars: Int.max would never match (no real paragraph has
+        // INT_MAX whitespace chars), but pre-fix it still consumed the
+        // gap-scan inner loop's `length >= minGapChars` comparison as a giant
+        // unsigned-equivalent miss path. Post-fix clamps to 1024, covering
+        // any plausible accidental whitespace run.
+        let url = try writeGapFixture()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let server = await WordMCPServer()
+
+        _ = await server.invokeToolForTesting(
+            name: "open_document",
+            arguments: ["path": .string(url.path), "doc_id": .string("gap_min_intmax")]
+        )
+
+        let result = await server.invokeToolForTesting(
+            name: "find_inline_math_gaps",
+            arguments: [
+                "doc_id": .string("gap_min_intmax"),
+                "min_gap_chars": .int(.max)
+            ]
+        )
+        let text = textOf(result)
+        XCTAssertFalse(
+            text.lowercased().contains("error"),
+            "expected clamped min_gap_chars to succeed without error; got: \(text)"
+        )
+    }
+
     // MARK: - Helpers
 
     private func writeCommentFixture() throws -> URL {

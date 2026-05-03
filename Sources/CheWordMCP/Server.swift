@@ -10680,8 +10680,12 @@ actor WordMCPServer {
 
     private func findInlineMathGaps(args: [String: Value]) async throws -> String {
         let (doc, _) = try await resolveDocument(args: args)
-        let minGapChars = max(1, args["min_gap_chars"]?.intValue ?? 2)
-        let contextChars = max(0, args["context_chars"]?.intValue ?? 30)
+        // Upper-bound clamps prevent caller-triggered Int overflow trap in
+        // `i + contextChars` (issue #130). 4096 chars is far more context than
+        // any human reads at a glance; min_gap_chars 1024 covers the longest
+        // plausible accidental whitespace run (a fully-blanked paragraph).
+        let minGapChars = min(max(1, args["min_gap_chars"]?.intValue ?? 2), 1024)
+        let contextChars = min(max(0, args["context_chars"]?.intValue ?? 30), 4096)
         let excludeTableCaptions = args["exclude_table_captions"]?.boolValue ?? true
 
         struct Gap {
