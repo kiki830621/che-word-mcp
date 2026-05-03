@@ -11092,15 +11092,20 @@ actor WordMCPServer {
         guard let page = args["page"]?.intValue else {
             throw WordError.missingParameter("page")
         }
-        guard page >= 1 else {
-            return "Error: estimate_paragraph_for_page: page must be >= 1"
+        // Upper-bound guard prevents (page - 1) * charsPerPage and page * charsPerPage
+        // from triggering Int overflow trap on caller-controlled Int.max input.
+        // 100_000 pages exceeds any real document by ~3 orders of magnitude.
+        guard page >= 1 && page <= 100_000 else {
+            return "Error: estimate_paragraph_for_page: page must be 1..100000, got \(page)"
         }
 
         let charsPerPage: Int
         let layoutBasis: String
         if let override = args["chars_per_page"]?.intValue {
-            guard override > 0 else {
-                return "Error: estimate_paragraph_for_page: chars_per_page must be > 0"
+            // Same overflow concern: page * charsPerPage with charsPerPage=Int.max.
+            // 200_000 chars/page is far beyond any plausible single-page density.
+            guard override > 0 && override <= 200_000 else {
+                return "Error: estimate_paragraph_for_page: chars_per_page must be 1..200000, got \(override)"
             }
             charsPerPage = override
             layoutBasis = "caller_chars_per_page"
@@ -11110,8 +11115,10 @@ actor WordMCPServer {
         }
 
         let contextParagraphs = args["context_paragraphs"]?.intValue ?? 2
-        guard contextParagraphs >= 0 else {
-            return "Error: estimate_paragraph_for_page: context_paragraphs must be >= 0"
+        // Upper bound prevents rawStart - contextParagraphs underflow and
+        // rawEnd + contextParagraphs overflow on Int.max input.
+        guard contextParagraphs >= 0 && contextParagraphs <= 1024 else {
+            return "Error: estimate_paragraph_for_page: context_paragraphs must be 0..1024, got \(contextParagraphs)"
         }
 
         let paragraphs = doc.getParagraphs()

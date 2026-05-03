@@ -69,7 +69,7 @@ final class Issue89EstimateParagraphForPageTests: XCTestCase {
                 "page": .int(0)
             ]
         )
-        XCTAssertTrue(textOf(invalidPage).contains("page must be >= 1"))
+        XCTAssertTrue(textOf(invalidPage).contains("page must be"))
 
         let invalidCalibration = await server.invokeToolForTesting(
             name: "estimate_paragraph_for_page",
@@ -79,7 +79,74 @@ final class Issue89EstimateParagraphForPageTests: XCTestCase {
                 "chars_per_page": .int(0)
             ]
         )
-        XCTAssertTrue(textOf(invalidCalibration).contains("chars_per_page must be > 0"))
+        XCTAssertTrue(textOf(invalidCalibration).contains("chars_per_page must be"))
+    }
+
+    // MARK: - Int.max overflow regression (P1 from 6-AI verify)
+
+    func testEstimateParagraphForPageRejectsHugePage() async throws {
+        // Pre-fix: `(page - 1) * charsPerPage` and `page * charsPerPage` with
+        // page = Int.max trapped on arithmetic overflow → MCP server actor
+        // crashed. Post-fix clamps page to 1..100_000.
+        let url = try docxWithFixedParagraphs(count: 1, charsPerParagraphBeforeBreak: 10)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let server = await WordMCPServer()
+        let result = await server.invokeToolForTesting(
+            name: "estimate_paragraph_for_page",
+            arguments: [
+                "source_path": .string(url.path),
+                "page": .int(.max)
+            ]
+        )
+        let text = textOf(result)
+        XCTAssertTrue(
+            text.contains("page must be") && text.contains("100000"),
+            "expected structured upper-bound rejection, got: \(text)"
+        )
+    }
+
+    func testEstimateParagraphForPageRejectsHugeCharsPerPage() async throws {
+        // Same overflow concern with chars_per_page = Int.max.
+        let url = try docxWithFixedParagraphs(count: 1, charsPerParagraphBeforeBreak: 10)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let server = await WordMCPServer()
+        let result = await server.invokeToolForTesting(
+            name: "estimate_paragraph_for_page",
+            arguments: [
+                "source_path": .string(url.path),
+                "page": .int(1),
+                "chars_per_page": .int(.max)
+            ]
+        )
+        let text = textOf(result)
+        XCTAssertTrue(
+            text.contains("chars_per_page must be") && text.contains("200000"),
+            "expected structured upper-bound rejection, got: \(text)"
+        )
+    }
+
+    func testEstimateParagraphForPageRejectsHugeContextParagraphs() async throws {
+        // Pre-fix: `rawStart - contextParagraphs` underflow + `rawEnd +
+        // contextParagraphs` overflow on Int.max. Post-fix clamps to 0..1024.
+        let url = try docxWithFixedParagraphs(count: 1, charsPerParagraphBeforeBreak: 10)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let server = await WordMCPServer()
+        let result = await server.invokeToolForTesting(
+            name: "estimate_paragraph_for_page",
+            arguments: [
+                "source_path": .string(url.path),
+                "page": .int(1),
+                "context_paragraphs": .int(.max)
+            ]
+        )
+        let text = textOf(result)
+        XCTAssertTrue(
+            text.contains("context_paragraphs must be") && text.contains("1024"),
+            "expected structured upper-bound rejection, got: \(text)"
+        )
     }
 
     func testEstimateParagraphForPageSchemaDocumentsHeuristicWarning() throws {
